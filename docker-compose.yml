@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: bytegym-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bytegym}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bytegym}
+      POSTGRES_DB: ${POSTGRES_DB:-bytegym}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      # postgres:18+ expects a single mount at /var/lib/postgresql and stores the
+      # cluster in a major-version subdirectory. Mounting .../data breaks startup.
+      - bytegym-pgdata:/var/lib/postgresql
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-bytegym} -d ${POSTGRES_DB:-bytegym}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  bytegym-pgdata:

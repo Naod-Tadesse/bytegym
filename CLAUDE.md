@@ -21,3 +21,10 @@
 - The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
 
 <!-- nx configuration end-->
+
+
+npx nx run @org/backend:db-up        # start postgres
+npx nx run @org/backend:db-generate  # after editing schema
+npx nx run @org/backend:db-migrate
+npx nx run @org/backend:serve
+npx nx run @org/backend:db-studio    # browse data
