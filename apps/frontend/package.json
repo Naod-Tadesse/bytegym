@@ -1,5 +1,15 @@
 {
   "name": "@org/frontend",
   "version": "0.0.1",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@tanstack/react-query": "^5.102.8",
+    "@tanstack/react-router": "^1.170.32",
+    "@tanstack/react-router-devtools": "^1.167.1",
+    "axios": "^1.18.1",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@tanstack/router-plugin": "^1.168.35"
+  }
 }

@@ -1,6 +1,7 @@
 /// <reference types='vitest' />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
@@ -13,7 +14,11 @@ export default defineConfig(() => ({
     port: 4200,
     host: 'localhost',
   },
-  plugins: [react()],
+  // `tanstackRouter` must come before `react()`.
+  plugins: [
+    tanstackRouter({ target: 'react', autoCodeSplitting: true }),
+    react(),
+  ],
   // Uncomment this if you are using workers.
   // worker: {
   //  plugins: [],
