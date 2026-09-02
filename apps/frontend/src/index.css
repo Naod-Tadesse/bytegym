@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
-@import '@fontsource-variable/geist';
+@import '@fontsource-variable/figtree';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -10,7 +10,7 @@
 @theme inline {
   --font-heading: var(--font-sans);
 
-  --font-sans: 'Geist Variable', sans-serif;
+  --font-sans: 'Figtree Variable', sans-serif;
 
   --color-sidebar-ring: var(--sidebar-ring);
 
@@ -90,7 +90,7 @@
 }
 
 :root {
-  --background: oklch(0.995 0.003 195);
+  --background: oklch(0.965 0.006 195);
 
   --foreground: oklch(0.205 0.021 195);
 
@@ -106,23 +106,23 @@
 
   --primary-foreground: oklch(0.985 0.005 195);
 
-  --secondary: oklch(0.96 0.008 195);
+  --secondary: oklch(0.94 0.01 195);
 
   --secondary-foreground: oklch(0.205 0.021 195);
 
-  --muted: oklch(0.96 0.008 195);
+  --muted: oklch(0.94 0.01 195);
 
   --muted-foreground: oklch(0.52 0.02 195);
 
-  --accent: oklch(0.95 0.015 175);
+  --accent: oklch(0.93 0.022 175);
 
   --accent-foreground: oklch(0.205 0.021 195);
 
   --destructive: oklch(0.577 0.245 27.325);
 
-  --border: oklch(0.91 0.008 195);
+  --border: oklch(0.895 0.01 195);
 
-  --input: oklch(0.91 0.008 195);
+  --input: oklch(0.895 0.01 195);
 
   --ring: oklch(0.58 0.15 163);
 
@@ -136,9 +136,9 @@
 
   --chart-5: oklch(0.586 0.222 17.6);
 
-  --radius: 0.625rem;
+  --radius: 0.31rem;
 
-  --sidebar: oklch(0.98 0.006 195);
+  --sidebar: oklch(0.95 0.008 195);
 
   --sidebar-foreground: oklch(0.205 0.021 195);
 
@@ -146,11 +146,11 @@
 
   --sidebar-primary-foreground: oklch(0.985 0.005 195);
 
-  --sidebar-accent: oklch(0.95 0.015 175);
+  --sidebar-accent: oklch(0.93 0.022 175);
 
   --sidebar-accent-foreground: oklch(0.205 0.021 195);
 
-  --sidebar-border: oklch(0.91 0.008 195);
+  --sidebar-border: oklch(0.895 0.01 195);
 
   --sidebar-ring: oklch(0.58 0.15 163);
 }

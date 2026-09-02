@@ -208,7 +208,7 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-6 py-3">
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-6 py-4">
           <div className="flex items-center gap-2">
             <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <HugeiconsIcon icon={Dumbbell01Icon} />
