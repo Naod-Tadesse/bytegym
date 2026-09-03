@@ -5,8 +5,11 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from '../auth/auth.module';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
+import { BranchesModule } from '../branches/branches.module';
 import { DatabaseModule } from '../database/database.module';
 import { HealthModule } from '../health/health.module';
+import { RolesModule } from '../roles/roles.module';
+import { StaffModule } from '../staff/staff.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -19,6 +22,9 @@ import { AppService } from './app.service';
     DatabaseModule,
     AuthModule,
     HealthModule,
+    BranchesModule,
+    RolesModule,
+    StaffModule,
   ],
   controllers: [AppController],
   providers: [

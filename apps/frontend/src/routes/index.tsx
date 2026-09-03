@@ -22,6 +22,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { DataTable } from '@/components/table/data-table';
 import { DataTableColumnHeader } from '@/components/table/column-header';
 import type { DataTableFeatures } from '@/components/table/data-table-features';
+import { rowNumberColumn } from '@/components/table/row-number-column';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -319,75 +320,80 @@ function StatusBadge({ status }: { status: MembershipStatus }) {
 
 const columnHelper = createColumnHelper<DataTableFeatures, Member>();
 
-const memberColumns = columnHelper.columns([
-  columnHelper.display({
-    id: 'select',
-    header: ({ table }) => (
-      <Checkbox
-        checked={table.getIsAllPageRowsSelected()}
-        indeterminate={
-          table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  }),
-  columnHelper.accessor('name', {
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Member" />
-    ),
-    cell: ({ row }) => (
-      <div className="flex items-center gap-3">
-        <Avatar>
-          <AvatarFallback>{initials(row.original.name)}</AvatarFallback>
-        </Avatar>
-        <span className="font-medium">{row.original.name}</span>
-      </div>
-    ),
-  }),
-  columnHelper.accessor('plan', {
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Plan" />
-    ),
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.plan}</span>
-    ),
-  }),
-  columnHelper.accessor('status', {
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Status" />
-    ),
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
-  }),
-  columnHelper.accessor('lastVisit', {
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Last visit" />
-    ),
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.lastVisit}</span>
-    ),
-  }),
-  columnHelper.display({
-    id: 'actions',
-    enableHiding: false,
-    cell: () => (
-      <Button variant="ghost" size="icon-sm">
-        <HugeiconsIcon icon={MoreHorizontalIcon} />
-        <span className="sr-only">Open row actions</span>
-      </Button>
-    ),
-  }),
-]);
+/** A factory, not a constant: the row number depends on the current page. */
+const buildMemberColumns = (pagination: { page: number; limit: number }) =>
+  columnHelper.columns([
+    columnHelper.display({
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          indeterminate={
+            table.getIsSomePageRowsSelected() &&
+            !table.getIsAllPageRowsSelected()
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    }),
+    rowNumberColumn(columnHelper, pagination),
+    columnHelper.accessor('name', {
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Member" />
+      ),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <Avatar>
+            <AvatarFallback>{initials(row.original.name)}</AvatarFallback>
+          </Avatar>
+          <span className="font-medium">{row.original.name}</span>
+        </div>
+      ),
+    }),
+    columnHelper.accessor('plan', {
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Plan" />
+      ),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.plan}</span>
+      ),
+    }),
+    columnHelper.accessor('status', {
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Status" />
+      ),
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    }),
+    columnHelper.accessor('lastVisit', {
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Last visit" />
+      ),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.lastVisit}</span>
+      ),
+    }),
+    columnHelper.display({
+      id: 'actions',
+      enableSorting: false,
+      enableHiding: false,
+      cell: () => (
+        <Button variant="ghost" size="icon-sm">
+          <HugeiconsIcon icon={MoreHorizontalIcon} />
+          <span className="sr-only">Open row actions</span>
+        </Button>
+      ),
+    }),
+  ]);
 
 function Dashboard() {
   const { t } = useTranslation();
@@ -430,6 +436,11 @@ function Dashboard() {
         currentPage * tableState.limit,
       ),
     [filteredMembers, currentPage, tableState.limit],
+  );
+
+  const memberColumns = useMemo(
+    () => buildMemberColumns({ page: currentPage, limit: tableState.limit }),
+    [currentPage, tableState.limit],
   );
 
   // Depends on `t`, so it is built per render rather than at module scope.

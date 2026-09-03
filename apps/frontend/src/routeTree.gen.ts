@@ -11,6 +11,15 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as BranchesIndexRouteImport } from './routes/branches/index'
+import { Route as BranchesNewRouteImport } from './routes/branches/new'
+import { Route as RolesIndexRouteImport } from './routes/roles/index'
+import { Route as StaffIndexRouteImport } from './routes/staff/index'
+import { Route as StaffNewRouteImport } from './routes/staff/new'
+import { Route as BranchesBranchIdEditRouteImport } from './routes/branches/$branchId.edit'
+import { Route as RolesRoleIdPermissionsRouteImport } from './routes/roles/$roleId.permissions'
+import { Route as StaffStaffIdIndexRouteImport } from './routes/staff/$staffId.index'
+import { Route as StaffStaffIdEditRouteImport } from './routes/staff/$staffId.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,31 +31,146 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BranchesIndexRoute = BranchesIndexRouteImport.update({
+  id: '/branches/',
+  path: '/branches/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BranchesNewRoute = BranchesNewRouteImport.update({
+  id: '/branches/new',
+  path: '/branches/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RolesIndexRoute = RolesIndexRouteImport.update({
+  id: '/roles/',
+  path: '/roles/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffIndexRoute = StaffIndexRouteImport.update({
+  id: '/staff/',
+  path: '/staff/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffNewRoute = StaffNewRouteImport.update({
+  id: '/staff/new',
+  path: '/staff/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BranchesBranchIdEditRoute = BranchesBranchIdEditRouteImport.update({
+  id: '/branches/$branchId/edit',
+  path: '/branches/$branchId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RolesRoleIdPermissionsRoute = RolesRoleIdPermissionsRouteImport.update({
+  id: '/roles/$roleId/permissions',
+  path: '/roles/$roleId/permissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffStaffIdIndexRoute = StaffStaffIdIndexRouteImport.update({
+  id: '/staff/$staffId/',
+  path: '/staff/$staffId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StaffStaffIdEditRoute = StaffStaffIdEditRouteImport.update({
+  id: '/staff/$staffId/edit',
+  path: '/staff/$staffId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
+  '/branches/new': typeof BranchesNewRoute
+  '/staff/new': typeof StaffNewRoute
+  '/branches/': typeof BranchesIndexRoute
+  '/roles/': typeof RolesIndexRoute
+  '/staff/': typeof StaffIndexRoute
+  '/branches/$branchId/edit': typeof BranchesBranchIdEditRoute
+  '/roles/$roleId/permissions': typeof RolesRoleIdPermissionsRoute
+  '/staff/$staffId/edit': typeof StaffStaffIdEditRoute
+  '/staff/$staffId/': typeof StaffStaffIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
+  '/branches/new': typeof BranchesNewRoute
+  '/staff/new': typeof StaffNewRoute
+  '/branches': typeof BranchesIndexRoute
+  '/roles': typeof RolesIndexRoute
+  '/staff': typeof StaffIndexRoute
+  '/branches/$branchId/edit': typeof BranchesBranchIdEditRoute
+  '/roles/$roleId/permissions': typeof RolesRoleIdPermissionsRoute
+  '/staff/$staffId/edit': typeof StaffStaffIdEditRoute
+  '/staff/$staffId': typeof StaffStaffIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
+  '/branches/new': typeof BranchesNewRoute
+  '/staff/new': typeof StaffNewRoute
+  '/branches/': typeof BranchesIndexRoute
+  '/roles/': typeof RolesIndexRoute
+  '/staff/': typeof StaffIndexRoute
+  '/branches/$branchId/edit': typeof BranchesBranchIdEditRoute
+  '/roles/$roleId/permissions': typeof RolesRoleIdPermissionsRoute
+  '/staff/$staffId/edit': typeof StaffStaffIdEditRoute
+  '/staff/$staffId/': typeof StaffStaffIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth/login'
+  fullPaths:
+    | '/'
+    | '/auth/login'
+    | '/branches/new'
+    | '/staff/new'
+    | '/branches/'
+    | '/roles/'
+    | '/staff/'
+    | '/branches/$branchId/edit'
+    | '/roles/$roleId/permissions'
+    | '/staff/$staffId/edit'
+    | '/staff/$staffId/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/login'
-  id: '__root__' | '/' | '/auth/login'
+  to:
+    | '/'
+    | '/auth/login'
+    | '/branches/new'
+    | '/staff/new'
+    | '/branches'
+    | '/roles'
+    | '/staff'
+    | '/branches/$branchId/edit'
+    | '/roles/$roleId/permissions'
+    | '/staff/$staffId/edit'
+    | '/staff/$staffId'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth/login'
+    | '/branches/new'
+    | '/staff/new'
+    | '/branches/'
+    | '/roles/'
+    | '/staff/'
+    | '/branches/$branchId/edit'
+    | '/roles/$roleId/permissions'
+    | '/staff/$staffId/edit'
+    | '/staff/$staffId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthLoginRoute: typeof AuthLoginRoute
+  BranchesNewRoute: typeof BranchesNewRoute
+  StaffNewRoute: typeof StaffNewRoute
+  BranchesIndexRoute: typeof BranchesIndexRoute
+  RolesIndexRoute: typeof RolesIndexRoute
+  StaffIndexRoute: typeof StaffIndexRoute
+  BranchesBranchIdEditRoute: typeof BranchesBranchIdEditRoute
+  RolesRoleIdPermissionsRoute: typeof RolesRoleIdPermissionsRoute
+  StaffStaffIdEditRoute: typeof StaffStaffIdEditRoute
+  StaffStaffIdIndexRoute: typeof StaffStaffIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +189,84 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/branches/': {
+      id: '/branches/'
+      path: '/branches'
+      fullPath: '/branches/'
+      preLoaderRoute: typeof BranchesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/branches/new': {
+      id: '/branches/new'
+      path: '/branches/new'
+      fullPath: '/branches/new'
+      preLoaderRoute: typeof BranchesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roles/': {
+      id: '/roles/'
+      path: '/roles'
+      fullPath: '/roles/'
+      preLoaderRoute: typeof RolesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff/': {
+      id: '/staff/'
+      path: '/staff'
+      fullPath: '/staff/'
+      preLoaderRoute: typeof StaffIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff/new': {
+      id: '/staff/new'
+      path: '/staff/new'
+      fullPath: '/staff/new'
+      preLoaderRoute: typeof StaffNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/branches/$branchId/edit': {
+      id: '/branches/$branchId/edit'
+      path: '/branches/$branchId/edit'
+      fullPath: '/branches/$branchId/edit'
+      preLoaderRoute: typeof BranchesBranchIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roles/$roleId/permissions': {
+      id: '/roles/$roleId/permissions'
+      path: '/roles/$roleId/permissions'
+      fullPath: '/roles/$roleId/permissions'
+      preLoaderRoute: typeof RolesRoleIdPermissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff/$staffId/': {
+      id: '/staff/$staffId/'
+      path: '/staff/$staffId'
+      fullPath: '/staff/$staffId/'
+      preLoaderRoute: typeof StaffStaffIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/staff/$staffId/edit': {
+      id: '/staff/$staffId/edit'
+      path: '/staff/$staffId/edit'
+      fullPath: '/staff/$staffId/edit'
+      preLoaderRoute: typeof StaffStaffIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthLoginRoute: AuthLoginRoute,
+  BranchesNewRoute: BranchesNewRoute,
+  StaffNewRoute: StaffNewRoute,
+  BranchesIndexRoute: BranchesIndexRoute,
+  RolesIndexRoute: RolesIndexRoute,
+  StaffIndexRoute: StaffIndexRoute,
+  BranchesBranchIdEditRoute: BranchesBranchIdEditRoute,
+  RolesRoleIdPermissionsRoute: RolesRoleIdPermissionsRoute,
+  StaffStaffIdEditRoute: StaffStaffIdEditRoute,
+  StaffStaffIdIndexRoute: StaffStaffIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

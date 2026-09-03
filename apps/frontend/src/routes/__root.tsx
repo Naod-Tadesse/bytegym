@@ -60,7 +60,8 @@ function RootComponent() {
       <>
         <Outlet />
         <Toaster />
-        <TanStackRouterDevtools />
+        {/* bottom-left would sit on top of the sidebar's user block. */}
+        <TanStackRouterDevtools position="bottom-right" />
       </>
     );
   }
@@ -79,7 +80,10 @@ function RootComponent() {
     <>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset className="h-svh overflow-auto">
+        {/* No height or overflow here — SidebarProvider's wrapper is min-h-svh,
+            so the page scrolls at the browser level. Forcing h-svh + overflow
+            here created a second, inner scrollbar. Matches shadcn dashboard-01. */}
+        <SidebarInset>
           <AppHeader />
           <Outlet />
         </SidebarInset>

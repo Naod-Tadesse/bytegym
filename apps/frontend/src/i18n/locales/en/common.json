@@ -10,7 +10,15 @@
     "addMember": "Add member",
     "searchMembers": "Search members…",
     "rowActions": "Open row actions",
-    "search": "Search"
+    "search": "Search",
+    "back": "Go back",
+    "cancel": "Cancel",
+    "create": "Create",
+    "save": "Save changes",
+    "edit": "Edit",
+    "view": "View details",
+    "deactivate": "Deactivate",
+    "delete": "Delete"
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -50,9 +58,156 @@
   },
   "status": {
     "active": "Active",
+    "inactive": "Inactive",
     "expiring": "Expiring",
     "lapsed": "Lapsed",
     "frozen": "Frozen"
+  },
+  "branches": {
+    "title": "Branches",
+    "subtitle": "The locations this gym operates from",
+    "actions": {
+      "create": "New branch",
+      "search": "Search branches…"
+    },
+    "columns": {
+      "name": "Name",
+      "city": "City",
+      "address": "Address",
+      "phone": "Phone",
+      "status": "Status"
+    },
+    "fields": {
+      "name": "Branch name",
+      "city": "City",
+      "phone": "Phone",
+      "addressLine": "Address",
+      "isActive": "Active",
+      "isActiveHint": "Inactive branches stay on record but cannot be assigned to new staff"
+    },
+    "placeholders": {
+      "name": "Bole",
+      "city": "Addis Ababa",
+      "addressLine": "Africa Avenue, near Friendship Centre"
+    },
+    "create": {
+      "title": "New branch",
+      "subtitle": "Add a location to the gym"
+    },
+    "edit": {
+      "title": "Edit branch"
+    },
+    "deactivate": {
+      "title": "Deactivate branch?",
+      "description": "{{name}} will stop appearing where a branch can be chosen. Existing staff and records keep their link to it.",
+      "confirm": "Deactivate"
+    }
+  },
+  "roles": {
+    "title": "Roles",
+    "subtitle": "What each kind of staff member is allowed to do",
+    "actions": {
+      "create": "New role",
+      "search": "Search roles…",
+      "managePermissions": "Manage permissions"
+    },
+    "columns": {
+      "name": "Role",
+      "description": "Description",
+      "status": "Status"
+    },
+    "fields": {
+      "name": "Role name",
+      "description": "Description",
+      "isActive": "Active",
+      "isActiveHint": "An inactive role keeps its permissions but cannot be assigned to staff"
+    },
+    "placeholders": {
+      "name": "Receptionist",
+      "description": "Works the front desk: checks members in and takes payments"
+    },
+    "create": {
+      "title": "New role",
+      "subtitle": "Name the role now — you can grant its permissions next"
+    },
+    "edit": {
+      "title": "Edit role",
+      "subtitle": "Renaming a role does not change what it can do"
+    },
+    "delete": {
+      "title": "Delete role?",
+      "description": "{{name}} will be removed from every staff member who holds it, and they will be signed out so their access is reissued correctly."
+    },
+    "permissions": {
+      "title": "Manage permissions",
+      "subtitle": "{{name}} — {{selected}} of {{total}} permissions granted",
+      "toggleGroup": "Select every permission in {{group}}"
+    }
+  },
+  "staff": {
+    "title": "Staff",
+    "subtitle": "Everyone who works here and what they can reach",
+    "actions": {
+      "create": "New staff member",
+      "search": "Search by name, phone or code…",
+      "terminate": "Terminate"
+    },
+    "columns": {
+      "name": "Name",
+      "phone": "Phone",
+      "jobTitle": "Job title",
+      "branch": "Branch",
+      "roles": "Roles",
+      "status": "Employment"
+    },
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "phone": "Phone",
+      "password": "Password",
+      "dateOfBirth": "Date of birth",
+      "gender": "Gender",
+      "staffCode": "Staff code",
+      "jobTitle": "Job title",
+      "branch": "Primary branch",
+      "hiredOn": "Hired on",
+      "terminatedOn": "Terminated on",
+      "employmentStatus": "Employment status",
+      "roles": "Roles",
+      "lastLogin": "Last signed in"
+    },
+    "placeholders": {
+      "pickDate": "Pick a date",
+      "gender": "Select gender",
+      "branch": "Select a branch",
+      "jobTitle": "Receptionist",
+      "roles": "Select roles"
+    },
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "employmentStatus": {
+      "active": "Active",
+      "onLeave": "On leave",
+      "terminated": "Terminated"
+    },
+    "create": {
+      "title": "New staff member",
+      "subtitle": "They sign in with the phone number and password you set here"
+    },
+    "edit": {
+      "title": "Edit staff member"
+    },
+    "detail": {
+      "noRoles": "No roles assigned",
+      "neverSignedIn": "Never"
+    },
+    "terminate": {
+      "title": "Terminate staff member?",
+      "description": "{{name}} will be signed out immediately and can no longer sign in. Their record and history are kept.",
+      "confirm": "Terminate"
+    }
   },
   "classes": {
     "title": "Today’s schedule",

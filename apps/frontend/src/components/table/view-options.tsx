@@ -39,9 +39,11 @@ export function DataTableViewOptions<TData extends RowData>({
         View
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[150px]">
-        <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        {/* The label is Base UI's Menu.GroupLabel: it throws outside a
+            Menu.Group, so it lives inside the group it labels. */}
         <DropdownMenuGroup>
+          <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+          <DropdownMenuSeparator />
           {table
             .getAllColumns()
             .filter(

@@ -4,16 +4,16 @@ import { z } from 'zod';
  * Ethiopian mobile in local form: 07… or 09… then 8 digits.
  * Mirrors PHONE_REGEX in apps/backend/src/auth/phone.ts — keep them in step.
  */
-const PHONE_REGEX = /^0[79]\d{8}$/;
+export const PHONE_REGEX = /^0[79]\d{8}$/;
+
+export const PHONE_MESSAGE =
+  'Phone must start with 07 or 09 followed by 8 digits, e.g. 0912345678';
 
 export const loginSchema = z.object({
   phone: z
     .string()
     .min(1, 'Phone number is required')
-    .regex(
-      PHONE_REGEX,
-      'Phone must start with 07 or 09 followed by 8 digits, e.g. 0912345678',
-    ),
+    .regex(PHONE_REGEX, PHONE_MESSAGE),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
