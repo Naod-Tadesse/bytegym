@@ -18,8 +18,14 @@ import {
 } from '@hugeicons/core-free-icons';
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
 import { useTranslation } from 'react-i18next';
+import { useMemo, useState } from 'react';
+import { createColumnHelper } from '@tanstack/react-table';
 
 import { ModeToggle } from '@/components/mode-toggle';
+import { DataTable } from '@/components/table/data-table';
+import { DataTableColumnHeader } from '@/components/table/column-header';
+import type { DataTableFeatures } from '@/components/table/data-table-features';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -48,14 +54,6 @@ import {
   ProgressTrack,
 } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 /**
@@ -84,48 +82,37 @@ const MEMBERSHIP_STATUS = {
 
 type MembershipStatus = keyof typeof MEMBERSHIP_STATUS;
 
-const MEMBERS: Array<{
+type Member = {
   name: string;
   plan: string;
   status: MembershipStatus;
   lastVisit: string;
-}> = [
-  {
-    name: 'Amara Osei',
-    plan: 'Unlimited',
-    status: 'active',
-    lastVisit: 'Today',
-  },
-  {
-    name: 'Ben Halvorsen',
-    plan: 'Off-peak',
-    status: 'active',
-    lastVisit: 'Today',
-  },
-  {
-    name: 'Chidi Nwosu',
-    plan: 'Unlimited',
-    status: 'expiring',
-    lastVisit: '2 days ago',
-  },
-  {
-    name: 'Dana Ricci',
-    plan: 'Class pass',
-    status: 'frozen',
-    lastVisit: '3 weeks ago',
-  },
-  {
-    name: 'Eli Zimmerman',
-    plan: 'Off-peak',
-    status: 'lapsed',
-    lastVisit: '2 months ago',
-  },
-  {
-    name: 'Farah Haddad',
-    plan: 'Unlimited',
-    status: 'active',
-    lastVisit: 'Yesterday',
-  },
+};
+
+const MEMBERS: Member[] = [
+  { name: 'Amara Osei', plan: 'Unlimited', status: 'active', lastVisit: 'Today' },
+  { name: 'Ben Halvorsen', plan: 'Off-peak', status: 'active', lastVisit: 'Today' },
+  { name: 'Chidi Nwosu', plan: 'Unlimited', status: 'expiring', lastVisit: '2 days ago' },
+  { name: 'Dana Ricci', plan: 'Class pass', status: 'frozen', lastVisit: '3 weeks ago' },
+  { name: 'Eli Zimmerman', plan: 'Off-peak', status: 'lapsed', lastVisit: '2 months ago' },
+  { name: 'Farah Haddad', plan: 'Unlimited', status: 'active', lastVisit: 'Yesterday' },
+  { name: 'Gabriel Moreau', plan: 'Class pass', status: 'active', lastVisit: 'Today' },
+  { name: 'Hana Kobayashi', plan: 'Unlimited', status: 'expiring', lastVisit: '4 days ago' },
+  { name: 'Ivan Petrov', plan: 'Off-peak', status: 'active', lastVisit: 'Yesterday' },
+  { name: 'Jelena Marković', plan: 'Unlimited', status: 'frozen', lastVisit: '1 month ago' },
+  { name: 'Kwame Mensah', plan: 'Class pass', status: 'active', lastVisit: 'Today' },
+  { name: 'Lena Fischer', plan: 'Unlimited', status: 'lapsed', lastVisit: '3 months ago' },
+  { name: 'Mateo Silva', plan: 'Off-peak', status: 'active', lastVisit: '2 days ago' },
+  { name: 'Nadia Rahman', plan: 'Unlimited', status: 'expiring', lastVisit: 'Yesterday' },
+  { name: 'Oscar Lindqvist', plan: 'Class pass', status: 'active', lastVisit: 'Today' },
+  { name: 'Priya Raman', plan: 'Unlimited', status: 'active', lastVisit: 'Today' },
+  { name: 'Quentin Blake', plan: 'Off-peak', status: 'frozen', lastVisit: '5 weeks ago' },
+  { name: 'Rosa Delgado', plan: 'Unlimited', status: 'active', lastVisit: 'Yesterday' },
+  { name: 'Sana Iqbal', plan: 'Class pass', status: 'expiring', lastVisit: '6 days ago' },
+  { name: 'Tobias Lund', plan: 'Unlimited', status: 'active', lastVisit: 'Today' },
+  { name: 'Ursula Novak', plan: 'Off-peak', status: 'lapsed', lastVisit: '4 months ago' },
+  { name: 'Viktor Andersen', plan: 'Unlimited', status: 'active', lastVisit: '3 days ago' },
+  { name: 'Wei Zhang', plan: 'Class pass', status: 'active', lastVisit: 'Today' },
 ];
 
 const CLASSES = [
@@ -223,8 +210,120 @@ function StatusBadge({ status }: { status: MembershipStatus }) {
   );
 }
 
+const columnHelper = createColumnHelper<DataTableFeatures, Member>();
+
+const memberColumns = columnHelper.columns([
+  columnHelper.display({
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected()}
+        indeterminate={
+          table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  }),
+  columnHelper.accessor('name', {
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Member" />
+    ),
+    cell: ({ row }) => (
+      <div className="flex items-center gap-3">
+        <Avatar>
+          <AvatarFallback>{initials(row.original.name)}</AvatarFallback>
+        </Avatar>
+        <span className="font-medium">{row.original.name}</span>
+      </div>
+    ),
+  }),
+  columnHelper.accessor('plan', {
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Plan" />
+    ),
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">{row.original.plan}</span>
+    ),
+  }),
+  columnHelper.accessor('status', {
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+  }),
+  columnHelper.accessor('lastVisit', {
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Last visit" />
+    ),
+    cell: ({ row }) => (
+      <span className="text-muted-foreground">{row.original.lastVisit}</span>
+    ),
+  }),
+  columnHelper.display({
+    id: 'actions',
+    enableHiding: false,
+    cell: () => (
+      <Button variant="ghost" size="icon-sm">
+        <HugeiconsIcon icon={MoreHorizontalIcon} />
+        <span className="sr-only">Open row actions</span>
+      </Button>
+    ),
+  }),
+]);
+
 function Dashboard() {
   const { t } = useTranslation();
+  const [tableState, setTableState] = useState<{
+    page: number;
+    limit: number;
+    search: string;
+    // Written by the faceted filter as a comma-joined string.
+    status?: string;
+  }>({ page: 1, limit: 5, search: '' });
+
+  // DataTable is built for server-side paging, so the parent plays the part of
+  // the server: filter first, then hand back only the current page.
+  const filteredMembers = useMemo(() => {
+    const query = tableState.search.trim().toLowerCase();
+    const statuses = tableState.status
+      ? new Set(tableState.status.split(','))
+      : null;
+
+    return MEMBERS.filter((member) => {
+      const matchesQuery =
+        !query ||
+        member.name.toLowerCase().includes(query) ||
+        member.plan.toLowerCase().includes(query);
+      const matchesStatus = !statuses || statuses.has(member.status);
+      return matchesQuery && matchesStatus;
+    });
+  }, [tableState.search, tableState.status]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredMembers.length / tableState.limit),
+  );
+  // Guard against landing past the last page after a filter narrows results.
+  const currentPage = Math.min(tableState.page, totalPages);
+  const pagedMembers = useMemo(
+    () =>
+      filteredMembers.slice(
+        (currentPage - 1) * tableState.limit,
+        currentPage * tableState.limit,
+      ),
+    [filteredMembers, currentPage, tableState.limit],
+  );
 
   // Depends on `t`, so it is built per render rather than at module scope.
   const chartConfig = {
@@ -352,47 +451,35 @@ function Dashboard() {
                 <CardDescription>{t('members.description')}</CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('members.columns.member')}</TableHead>
-                      <TableHead>{t('members.columns.plan')}</TableHead>
-                      <TableHead>{t('members.columns.status')}</TableHead>
-                      <TableHead>{t('members.columns.lastVisit')}</TableHead>
-                      <TableHead className="w-px" />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {MEMBERS.map((member) => (
-                      <TableRow key={member.name}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarFallback>
-                                {initials(member.name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="font-medium">{member.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {member.plan}
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={member.status} />
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {member.lastVisit}
-                        </TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon">
-                            <HugeiconsIcon icon={MoreHorizontalIcon} />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <DataTable
+                  columns={memberColumns}
+                  data={pagedMembers}
+                  tableState={tableState}
+                  setTableState={setTableState}
+                  isLoading={false}
+                  searchPlaceholder={t('actions.searchMembers')}
+                  filters={[
+                    {
+                      field: 'status',
+                      title: t('members.columns.status'),
+                      multiple: true,
+                      options: [
+                        { label: t('status.active'), value: 'active' },
+                        { label: t('status.expiring'), value: 'expiring' },
+                        { label: t('status.lapsed'), value: 'lapsed' },
+                        { label: t('status.frozen'), value: 'frozen' },
+                      ],
+                    },
+                  ]}
+                  paginationInfo={{
+                    page: currentPage,
+                    limit: tableState.limit,
+                    total: filteredMembers.length,
+                    totalPages,
+                    hasNext: currentPage < totalPages,
+                    hasPrev: currentPage > 1,
+                  }}
+                />
               </CardContent>
             </Card>
           </TabsContent>
