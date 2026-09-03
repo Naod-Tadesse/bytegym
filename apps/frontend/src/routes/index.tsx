@@ -9,10 +9,8 @@ import {
   CheckmarkCircle02Icon,
   Clock01Icon,
   Dollar01Icon,
-  Dumbbell01Icon,
   Login03Icon,
   MoreHorizontalIcon,
-  Search01Icon,
   SnowIcon,
   UserGroupIcon,
 } from '@hugeicons/core-free-icons';
@@ -21,7 +19,6 @@ import { useTranslation } from 'react-i18next';
 import { useMemo, useState } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 
-import { ModeToggle } from '@/components/mode-toggle';
 import { DataTable } from '@/components/table/data-table';
 import { DataTableColumnHeader } from '@/components/table/column-header';
 import type { DataTableFeatures } from '@/components/table/data-table-features';
@@ -43,11 +40,6 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group';
 import {
   Progress,
   ProgressIndicator,
@@ -90,29 +82,144 @@ type Member = {
 };
 
 const MEMBERS: Member[] = [
-  { name: 'Amara Osei', plan: 'Unlimited', status: 'active', lastVisit: 'Today' },
-  { name: 'Ben Halvorsen', plan: 'Off-peak', status: 'active', lastVisit: 'Today' },
-  { name: 'Chidi Nwosu', plan: 'Unlimited', status: 'expiring', lastVisit: '2 days ago' },
-  { name: 'Dana Ricci', plan: 'Class pass', status: 'frozen', lastVisit: '3 weeks ago' },
-  { name: 'Eli Zimmerman', plan: 'Off-peak', status: 'lapsed', lastVisit: '2 months ago' },
-  { name: 'Farah Haddad', plan: 'Unlimited', status: 'active', lastVisit: 'Yesterday' },
-  { name: 'Gabriel Moreau', plan: 'Class pass', status: 'active', lastVisit: 'Today' },
-  { name: 'Hana Kobayashi', plan: 'Unlimited', status: 'expiring', lastVisit: '4 days ago' },
-  { name: 'Ivan Petrov', plan: 'Off-peak', status: 'active', lastVisit: 'Yesterday' },
-  { name: 'Jelena Marković', plan: 'Unlimited', status: 'frozen', lastVisit: '1 month ago' },
-  { name: 'Kwame Mensah', plan: 'Class pass', status: 'active', lastVisit: 'Today' },
-  { name: 'Lena Fischer', plan: 'Unlimited', status: 'lapsed', lastVisit: '3 months ago' },
-  { name: 'Mateo Silva', plan: 'Off-peak', status: 'active', lastVisit: '2 days ago' },
-  { name: 'Nadia Rahman', plan: 'Unlimited', status: 'expiring', lastVisit: 'Yesterday' },
-  { name: 'Oscar Lindqvist', plan: 'Class pass', status: 'active', lastVisit: 'Today' },
-  { name: 'Priya Raman', plan: 'Unlimited', status: 'active', lastVisit: 'Today' },
-  { name: 'Quentin Blake', plan: 'Off-peak', status: 'frozen', lastVisit: '5 weeks ago' },
-  { name: 'Rosa Delgado', plan: 'Unlimited', status: 'active', lastVisit: 'Yesterday' },
-  { name: 'Sana Iqbal', plan: 'Class pass', status: 'expiring', lastVisit: '6 days ago' },
-  { name: 'Tobias Lund', plan: 'Unlimited', status: 'active', lastVisit: 'Today' },
-  { name: 'Ursula Novak', plan: 'Off-peak', status: 'lapsed', lastVisit: '4 months ago' },
-  { name: 'Viktor Andersen', plan: 'Unlimited', status: 'active', lastVisit: '3 days ago' },
-  { name: 'Wei Zhang', plan: 'Class pass', status: 'active', lastVisit: 'Today' },
+  {
+    name: 'Amara Osei',
+    plan: 'Unlimited',
+    status: 'active',
+    lastVisit: 'Today',
+  },
+  {
+    name: 'Ben Halvorsen',
+    plan: 'Off-peak',
+    status: 'active',
+    lastVisit: 'Today',
+  },
+  {
+    name: 'Chidi Nwosu',
+    plan: 'Unlimited',
+    status: 'expiring',
+    lastVisit: '2 days ago',
+  },
+  {
+    name: 'Dana Ricci',
+    plan: 'Class pass',
+    status: 'frozen',
+    lastVisit: '3 weeks ago',
+  },
+  {
+    name: 'Eli Zimmerman',
+    plan: 'Off-peak',
+    status: 'lapsed',
+    lastVisit: '2 months ago',
+  },
+  {
+    name: 'Farah Haddad',
+    plan: 'Unlimited',
+    status: 'active',
+    lastVisit: 'Yesterday',
+  },
+  {
+    name: 'Gabriel Moreau',
+    plan: 'Class pass',
+    status: 'active',
+    lastVisit: 'Today',
+  },
+  {
+    name: 'Hana Kobayashi',
+    plan: 'Unlimited',
+    status: 'expiring',
+    lastVisit: '4 days ago',
+  },
+  {
+    name: 'Ivan Petrov',
+    plan: 'Off-peak',
+    status: 'active',
+    lastVisit: 'Yesterday',
+  },
+  {
+    name: 'Jelena Marković',
+    plan: 'Unlimited',
+    status: 'frozen',
+    lastVisit: '1 month ago',
+  },
+  {
+    name: 'Kwame Mensah',
+    plan: 'Class pass',
+    status: 'active',
+    lastVisit: 'Today',
+  },
+  {
+    name: 'Lena Fischer',
+    plan: 'Unlimited',
+    status: 'lapsed',
+    lastVisit: '3 months ago',
+  },
+  {
+    name: 'Mateo Silva',
+    plan: 'Off-peak',
+    status: 'active',
+    lastVisit: '2 days ago',
+  },
+  {
+    name: 'Nadia Rahman',
+    plan: 'Unlimited',
+    status: 'expiring',
+    lastVisit: 'Yesterday',
+  },
+  {
+    name: 'Oscar Lindqvist',
+    plan: 'Class pass',
+    status: 'active',
+    lastVisit: 'Today',
+  },
+  {
+    name: 'Priya Raman',
+    plan: 'Unlimited',
+    status: 'active',
+    lastVisit: 'Today',
+  },
+  {
+    name: 'Quentin Blake',
+    plan: 'Off-peak',
+    status: 'frozen',
+    lastVisit: '5 weeks ago',
+  },
+  {
+    name: 'Rosa Delgado',
+    plan: 'Unlimited',
+    status: 'active',
+    lastVisit: 'Yesterday',
+  },
+  {
+    name: 'Sana Iqbal',
+    plan: 'Class pass',
+    status: 'expiring',
+    lastVisit: '6 days ago',
+  },
+  {
+    name: 'Tobias Lund',
+    plan: 'Unlimited',
+    status: 'active',
+    lastVisit: 'Today',
+  },
+  {
+    name: 'Ursula Novak',
+    plan: 'Off-peak',
+    status: 'lapsed',
+    lastVisit: '4 months ago',
+  },
+  {
+    name: 'Viktor Andersen',
+    plan: 'Unlimited',
+    status: 'active',
+    lastVisit: '3 days ago',
+  },
+  {
+    name: 'Wei Zhang',
+    plan: 'Class pass',
+    status: 'active',
+    lastVisit: 'Today',
+  },
 ];
 
 const CLASSES = [
@@ -332,197 +439,172 @@ function Dashboard() {
   } satisfies ChartConfig;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-6 py-4">
-          <div className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <HugeiconsIcon icon={Dumbbell01Icon} />
-            </div>
-            <span className="text-lg font-semibold tracking-tight">
-              {t('app.name')}
-            </span>
-          </div>
-
-          <InputGroup className="ml-auto max-w-xs">
-            <InputGroupAddon>
-              <HugeiconsIcon icon={Search01Icon} />
-            </InputGroupAddon>
-            <InputGroupInput placeholder={t('actions.searchMembers')} />
-          </InputGroup>
-
-          <Button>
-            <HugeiconsIcon icon={Add01Icon} data-icon="inline-start" />
-            {t('actions.addMember')}
-          </Button>
-
-          <ModeToggle />
+    <div className="flex flex-1 flex-col gap-6 p-6">
+      {/* Page heading — the app chrome (brand, search, theme, user) lives in
+          AppHeader, so this route only owns its own content. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {t('nav.dashboard')}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t('dashboard.subtitle')}
+          </p>
         </div>
-      </header>
+        <Button>
+          <HugeiconsIcon icon={Add01Icon} data-icon="inline-start" />
+          {t('actions.addMember')}
+        </Button>
+      </div>
 
-      <main className="mx-auto flex max-w-7xl flex-col gap-6 p-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {STATS.map((stat) => (
-            <Card key={stat.labelKey}>
-              <CardHeader>
-                <CardDescription>{t(stat.labelKey)}</CardDescription>
-                <CardTitle className="text-2xl">{stat.value}</CardTitle>
-                <CardAction>
-                  <HugeiconsIcon
-                    icon={stat.icon}
-                    className="text-muted-foreground"
-                  />
-                </CardAction>
-              </CardHeader>
-              <CardContent>
-                <Badge variant="secondary">
-                  <HugeiconsIcon
-                    icon={ArrowUp01Icon}
-                    data-icon="inline-start"
-                  />
-                  {stat.delta}
-                </Badge>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {STATS.map((stat) => (
+          <Card key={stat.labelKey}>
             <CardHeader>
-              <CardTitle>{t('traffic.title')}</CardTitle>
-              <CardDescription>{t('traffic.description')}</CardDescription>
+              <CardDescription>{t(stat.labelKey)}</CardDescription>
+              <CardTitle className="text-2xl">{stat.value}</CardTitle>
+              <CardAction>
+                <HugeiconsIcon
+                  icon={stat.icon}
+                  className="text-muted-foreground"
+                />
+              </CardAction>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={chartConfig} className="h-64 w-full">
-                <BarChart data={TRAFFIC}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="day" tickLine={false} axisLine={false} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar
-                    dataKey="morning"
-                    fill="var(--color-morning)"
-                    radius={4}
-                  />
-                  <Bar
-                    dataKey="evening"
-                    fill="var(--color-evening)"
-                    radius={4}
-                  />
-                </BarChart>
-              </ChartContainer>
+              <Badge variant="secondary">
+                <HugeiconsIcon icon={ArrowUp01Icon} data-icon="inline-start" />
+                {stat.delta}
+              </Badge>
             </CardContent>
           </Card>
+        ))}
+      </div>
 
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>{t('traffic.title')}</CardTitle>
+            <CardDescription>{t('traffic.description')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-64 w-full">
+              <BarChart data={TRAFFIC}>
+                <CartesianGrid vertical={false} />
+                <XAxis dataKey="day" tickLine={false} axisLine={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="morning" fill="var(--color-morning)" radius={4} />
+                <Bar dataKey="evening" fill="var(--color-evening)" radius={4} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('checkIns.title')}</CardTitle>
+            <CardDescription>{t('checkIns.description')}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {CHECK_INS.map((entry, index) => (
+              <div key={entry.name} className="flex flex-col gap-4">
+                {index > 0 && <Separator />}
+                <div className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarFallback>{initials(entry.name)}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">{entry.name}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {entry.at}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="members">
+        <TabsList>
+          <TabsTrigger value="members">{t('tabs.members')}</TabsTrigger>
+          <TabsTrigger value="classes">{t('tabs.classes')}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="members">
           <Card>
             <CardHeader>
-              <CardTitle>{t('checkIns.title')}</CardTitle>
-              <CardDescription>{t('checkIns.description')}</CardDescription>
+              <CardTitle>{t('members.title')}</CardTitle>
+              <CardDescription>{t('members.description')}</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              {CHECK_INS.map((entry, index) => (
-                <div key={entry.name} className="flex flex-col gap-4">
-                  {index > 0 && <Separator />}
+            <CardContent>
+              <DataTable
+                columns={memberColumns}
+                data={pagedMembers}
+                tableState={tableState}
+                setTableState={setTableState}
+                isLoading={false}
+                searchPlaceholder={t('actions.searchMembers')}
+                filters={[
+                  {
+                    field: 'status',
+                    title: t('members.columns.status'),
+                    multiple: true,
+                    options: [
+                      { label: t('status.active'), value: 'active' },
+                      { label: t('status.expiring'), value: 'expiring' },
+                      { label: t('status.lapsed'), value: 'lapsed' },
+                      { label: t('status.frozen'), value: 'frozen' },
+                    ],
+                  },
+                ]}
+                paginationInfo={{
+                  page: currentPage,
+                  limit: tableState.limit,
+                  total: filteredMembers.length,
+                  totalPages,
+                  hasNext: currentPage < totalPages,
+                  hasPrev: currentPage > 1,
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="classes">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('classes.title')}</CardTitle>
+              <CardDescription>{t('classes.description')}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-6">
+              {CLASSES.map((session) => (
+                <div key={session.name} className="flex flex-col gap-2">
                   <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarFallback>{initials(entry.name)}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium">{entry.name}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      {entry.at}
+                    <Badge variant="outline">
+                      <HugeiconsIcon
+                        icon={Clock01Icon}
+                        data-icon="inline-start"
+                      />
+                      {session.time}
+                    </Badge>
+                    <span className="text-sm font-medium">{session.name}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {session.trainer}
+                    </span>
+                    <span className="ml-auto text-sm tabular-nums text-muted-foreground">
+                      {session.booked}/{session.capacity}
                     </span>
                   </div>
+                  <Progress value={(session.booked / session.capacity) * 100}>
+                    <ProgressTrack>
+                      <ProgressIndicator />
+                    </ProgressTrack>
+                  </Progress>
                 </div>
               ))}
             </CardContent>
           </Card>
-        </div>
-
-        <Tabs defaultValue="members">
-          <TabsList>
-            <TabsTrigger value="members">{t('tabs.members')}</TabsTrigger>
-            <TabsTrigger value="classes">{t('tabs.classes')}</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="members">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('members.title')}</CardTitle>
-                <CardDescription>{t('members.description')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DataTable
-                  columns={memberColumns}
-                  data={pagedMembers}
-                  tableState={tableState}
-                  setTableState={setTableState}
-                  isLoading={false}
-                  searchPlaceholder={t('actions.searchMembers')}
-                  filters={[
-                    {
-                      field: 'status',
-                      title: t('members.columns.status'),
-                      multiple: true,
-                      options: [
-                        { label: t('status.active'), value: 'active' },
-                        { label: t('status.expiring'), value: 'expiring' },
-                        { label: t('status.lapsed'), value: 'lapsed' },
-                        { label: t('status.frozen'), value: 'frozen' },
-                      ],
-                    },
-                  ]}
-                  paginationInfo={{
-                    page: currentPage,
-                    limit: tableState.limit,
-                    total: filteredMembers.length,
-                    totalPages,
-                    hasNext: currentPage < totalPages,
-                    hasPrev: currentPage > 1,
-                  }}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="classes">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('classes.title')}</CardTitle>
-                <CardDescription>{t('classes.description')}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-6">
-                {CLASSES.map((session) => (
-                  <div key={session.name} className="flex flex-col gap-2">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline">
-                        <HugeiconsIcon
-                          icon={Clock01Icon}
-                          data-icon="inline-start"
-                        />
-                        {session.time}
-                      </Badge>
-                      <span className="text-sm font-medium">
-                        {session.name}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {session.trainer}
-                      </span>
-                      <span className="ml-auto text-sm tabular-nums text-muted-foreground">
-                        {session.booked}/{session.capacity}
-                      </span>
-                    </div>
-                    <Progress value={(session.booked / session.capacity) * 100}>
-                      <ProgressTrack>
-                        <ProgressIndicator />
-                      </ProgressTrack>
-                    </Progress>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

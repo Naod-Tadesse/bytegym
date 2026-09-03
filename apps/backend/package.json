@@ -114,6 +114,12 @@
           "command": "drizzle-kit migrate --config=apps/backend/drizzle.config.ts"
         }
       },
+      "db-seed": {
+        "executor": "nx:run-commands",
+        "options": {
+          "command": "tsx apps/backend/src/database/seed.ts"
+        }
+      },
       "db-push": {
         "executor": "nx:run-commands",
         "options": {
@@ -133,9 +139,16 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^12.0.0",
     "@nestjs/core": "^11.0.0",
+    "@nestjs/jwt": "^12.0.1",
+    "@nestjs/passport": "^12.0.0",
     "@nestjs/platform-express": "^11.0.0",
+    "bcrypt": "^6.0.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^1.0.0-rc.4",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "pg": "^8.23.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0",
@@ -143,6 +156,8 @@
   },
   "devDependencies": {
     "@nestjs/testing": "^11.0.0",
+    "@types/bcrypt": "^6.0.0",
+    "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.23.1",
     "drizzle-kit": "^1.0.0-rc.4",
     "tsx": "^4.23.13"

@@ -1,5 +1,6 @@
 import { Controller, Get, Inject } from '@nestjs/common';
 import { count, sql } from 'drizzle-orm';
+import { Public } from '../auth/decorators/public.decorator';
 import type { Database } from '../database/database.client';
 import { DRIZZLE } from '../database/database.constants';
 import { users } from '../database/schema';
@@ -8,6 +9,8 @@ import { users } from '../database/schema';
 export class HealthController {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
+  // A liveness probe must answer without credentials.
+  @Public()
   @Get()
   async check() {
     await this.db.execute(sql`select 1`);

@@ -1,11 +1,16 @@
 {
   "app": {
-    "name": "bytegym"
+    "name": "bytegym",
+    "tagline": "Gym management"
+  },
+  "dashboard": {
+    "subtitle": "What is happening across the gym today"
   },
   "actions": {
     "addMember": "Add member",
     "searchMembers": "Search members…",
-    "rowActions": "Open row actions"
+    "rowActions": "Open row actions",
+    "search": "Search"
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -62,5 +67,33 @@
     "fri": "Fri",
     "sat": "Sat",
     "sun": "Sun"
+  },
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "signInDescription": "Sign in to manage your gym",
+    "phone": "Phone number",
+    "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "signIn": "Sign in"
+  },
+  "nav": {
+    "groups": {
+      "overview": "Overview",
+      "members": "Members",
+      "operations": "Operations",
+      "admin": "Admin"
+    },
+    "dashboard": "Dashboard",
+    "members": "Members",
+    "checkIns": "Check-ins",
+    "classes": "Classes",
+    "reports": "Reports",
+    "staff": "Staff",
+    "roles": "Roles",
+    "branches": "Branches",
+    "profile": "Profile",
+    "logOut": "Log out",
+    "userMenu": "Open user menu"
   }
 }
