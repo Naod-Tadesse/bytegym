@@ -1,0 +1,66 @@
+{
+  "app": {
+    "name": "bytegym"
+  },
+  "actions": {
+    "addMember": "Add member",
+    "searchMembers": "Search members…",
+    "rowActions": "Open row actions"
+  },
+  "theme": {
+    "toggle": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "stats": {
+    "activeMembers": "Active members",
+    "checkInsToday": "Check-ins today",
+    "monthlyRevenue": "Monthly revenue",
+    "classesToday": "Classes today"
+  },
+  "traffic": {
+    "title": "Gym traffic",
+    "description": "Check-ins per session, last 7 days",
+    "morning": "Morning",
+    "evening": "Evening"
+  },
+  "checkIns": {
+    "title": "Recent check-ins",
+    "description": "Live from the front desk"
+  },
+  "tabs": {
+    "members": "Members",
+    "classes": "Classes"
+  },
+  "members": {
+    "title": "Members",
+    "description": "Every membership state pairs a colour with an icon, never colour alone",
+    "columns": {
+      "member": "Member",
+      "plan": "Plan",
+      "status": "Status",
+      "lastVisit": "Last visit"
+    }
+  },
+  "status": {
+    "active": "Active",
+    "expiring": "Expiring",
+    "lapsed": "Lapsed",
+    "frozen": "Frozen"
+  },
+  "classes": {
+    "title": "Today’s schedule",
+    "description": "Bookings against capacity",
+    "capacity": "{{booked}}/{{capacity}}"
+  },
+  "days": {
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat",
+    "sun": "Sun"
+  }
+}

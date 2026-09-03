@@ -17,6 +17,7 @@ import {
   UserGroupIcon,
 } from '@hugeicons/core-free-icons';
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 import { ModeToggle } from '@/components/mode-toggle';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -63,10 +64,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
  * amber/warning token yet.
  */
 const MEMBERSHIP_STATUS = {
-  active: { label: 'Active', variant: 'default', icon: CheckmarkCircle02Icon },
-  expiring: { label: 'Expiring', variant: 'outline', icon: Alert02Icon },
-  lapsed: { label: 'Lapsed', variant: 'destructive', icon: Cancel01Icon },
-  frozen: { label: 'Frozen', variant: 'secondary', icon: SnowIcon },
+  active: {
+    labelKey: 'status.active',
+    variant: 'default',
+    icon: CheckmarkCircle02Icon,
+  },
+  expiring: {
+    labelKey: 'status.expiring',
+    variant: 'outline',
+    icon: Alert02Icon,
+  },
+  lapsed: {
+    labelKey: 'status.lapsed',
+    variant: 'destructive',
+    icon: Cancel01Icon,
+  },
+  frozen: { labelKey: 'status.frozen', variant: 'secondary', icon: SnowIcon },
 } as const;
 
 type MembershipStatus = keyof typeof MEMBERSHIP_STATUS;
@@ -164,27 +177,32 @@ const TRAFFIC = [
   { day: 'Sun', morning: 112, evening: 61 },
 ];
 
-const CHART_CONFIG = {
-  morning: { label: 'Morning', color: 'var(--chart-1)' },
-  evening: { label: 'Evening', color: 'var(--chart-2)' },
-} satisfies ChartConfig;
-
 const STATS = [
   {
-    label: 'Active members',
+    labelKey: 'stats.activeMembers',
     value: '1,284',
     delta: '+3.2%',
     icon: UserGroupIcon,
   },
-  { label: 'Check-ins today', value: '317', delta: '+8.1%', icon: Login03Icon },
   {
-    label: 'Monthly revenue',
+    labelKey: 'stats.checkInsToday',
+    value: '317',
+    delta: '+8.1%',
+    icon: Login03Icon,
+  },
+  {
+    labelKey: 'stats.monthlyRevenue',
     value: '$48,290',
     delta: '+2.4%',
     icon: Dollar01Icon,
   },
-  { label: 'Classes today', value: '12', delta: '+1', icon: Calendar03Icon },
-];
+  {
+    labelKey: 'stats.classesToday',
+    value: '12',
+    delta: '+1',
+    icon: Calendar03Icon,
+  },
+] as const;
 
 function initials(name: string) {
   return name
@@ -194,17 +212,26 @@ function initials(name: string) {
 }
 
 function StatusBadge({ status }: { status: MembershipStatus }) {
-  const { label, variant, icon } = MEMBERSHIP_STATUS[status];
+  const { t } = useTranslation();
+  const { labelKey, variant, icon } = MEMBERSHIP_STATUS[status];
 
   return (
     <Badge variant={variant}>
       <HugeiconsIcon icon={icon} data-icon="inline-start" />
-      {label}
+      {t(labelKey)}
     </Badge>
   );
 }
 
 function Dashboard() {
+  const { t } = useTranslation();
+
+  // Depends on `t`, so it is built per render rather than at module scope.
+  const chartConfig = {
+    morning: { label: t('traffic.morning'), color: 'var(--chart-1)' },
+    evening: { label: t('traffic.evening'), color: 'var(--chart-2)' },
+  } satisfies ChartConfig;
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
@@ -214,7 +241,7 @@ function Dashboard() {
               <HugeiconsIcon icon={Dumbbell01Icon} />
             </div>
             <span className="text-lg font-semibold tracking-tight">
-              bytegym
+              {t('app.name')}
             </span>
           </div>
 
@@ -222,12 +249,12 @@ function Dashboard() {
             <InputGroupAddon>
               <HugeiconsIcon icon={Search01Icon} />
             </InputGroupAddon>
-            <InputGroupInput placeholder="Search members…" />
+            <InputGroupInput placeholder={t('actions.searchMembers')} />
           </InputGroup>
 
           <Button>
             <HugeiconsIcon icon={Add01Icon} data-icon="inline-start" />
-            Add member
+            {t('actions.addMember')}
           </Button>
 
           <ModeToggle />
@@ -237,9 +264,9 @@ function Dashboard() {
       <main className="mx-auto flex max-w-7xl flex-col gap-6 p-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {STATS.map((stat) => (
-            <Card key={stat.label}>
+            <Card key={stat.labelKey}>
               <CardHeader>
-                <CardDescription>{stat.label}</CardDescription>
+                <CardDescription>{t(stat.labelKey)}</CardDescription>
                 <CardTitle className="text-2xl">{stat.value}</CardTitle>
                 <CardAction>
                   <HugeiconsIcon
@@ -264,13 +291,11 @@ function Dashboard() {
         <div className="grid gap-6 lg:grid-cols-3">
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Gym traffic</CardTitle>
-              <CardDescription>
-                Check-ins per session, last 7 days
-              </CardDescription>
+              <CardTitle>{t('traffic.title')}</CardTitle>
+              <CardDescription>{t('traffic.description')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={CHART_CONFIG} className="h-64 w-full">
+              <ChartContainer config={chartConfig} className="h-64 w-full">
                 <BarChart data={TRAFFIC}>
                   <CartesianGrid vertical={false} />
                   <XAxis dataKey="day" tickLine={false} axisLine={false} />
@@ -292,8 +317,8 @@ function Dashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Recent check-ins</CardTitle>
-              <CardDescription>Live from the front desk</CardDescription>
+              <CardTitle>{t('checkIns.title')}</CardTitle>
+              <CardDescription>{t('checkIns.description')}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {CHECK_INS.map((entry, index) => (
@@ -316,27 +341,24 @@ function Dashboard() {
 
         <Tabs defaultValue="members">
           <TabsList>
-            <TabsTrigger value="members">Members</TabsTrigger>
-            <TabsTrigger value="classes">Classes</TabsTrigger>
+            <TabsTrigger value="members">{t('tabs.members')}</TabsTrigger>
+            <TabsTrigger value="classes">{t('tabs.classes')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="members">
             <Card>
               <CardHeader>
-                <CardTitle>Members</CardTitle>
-                <CardDescription>
-                  Every membership state pairs a colour with an icon, never
-                  colour alone
-                </CardDescription>
+                <CardTitle>{t('members.title')}</CardTitle>
+                <CardDescription>{t('members.description')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Member</TableHead>
-                      <TableHead>Plan</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Last visit</TableHead>
+                      <TableHead>{t('members.columns.member')}</TableHead>
+                      <TableHead>{t('members.columns.plan')}</TableHead>
+                      <TableHead>{t('members.columns.status')}</TableHead>
+                      <TableHead>{t('members.columns.lastVisit')}</TableHead>
                       <TableHead className="w-px" />
                     </TableRow>
                   </TableHeader>
@@ -378,8 +400,8 @@ function Dashboard() {
           <TabsContent value="classes">
             <Card>
               <CardHeader>
-                <CardTitle>Today’s schedule</CardTitle>
-                <CardDescription>Bookings against capacity</CardDescription>
+                <CardTitle>{t('classes.title')}</CardTitle>
+                <CardDescription>{t('classes.description')}</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-6">
                 {CLASSES.map((session) => (
