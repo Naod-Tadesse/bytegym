@@ -56,6 +56,9 @@ function PaginationLink({
       className={cn(className)}
       nativeButton={false}
       render={
+        // Content is supplied by Button's children via the render prop, which
+        // jsx-a11y cannot see statically.
+        // eslint-disable-next-line jsx-a11y/anchor-has-content
         <a
           aria-current={isActive ? 'page' : undefined}
           data-slot="pagination-link"
