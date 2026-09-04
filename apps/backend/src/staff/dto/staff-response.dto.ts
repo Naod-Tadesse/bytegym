@@ -1,12 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 import {
+  DATA_SCOPE_ENUM_NAME,
+  DATA_SCOPES,
   EMPLOYMENT_STATUS_ENUM_NAME,
   EMPLOYMENT_STATUSES,
   GENDER_ENUM_NAME,
   GENDERS,
   USER_STATUS_ENUM_NAME,
   USER_STATUSES,
+  type DataScope,
   type EmploymentStatus,
   type Gender,
   type UserStatus,
@@ -41,6 +44,13 @@ export class StaffListItemDto {
     enumName: EMPLOYMENT_STATUS_ENUM_NAME,
   })
   employmentStatus!: EmploymentStatus;
+
+  @ApiProperty({
+    enum: [...DATA_SCOPES],
+    enumName: DATA_SCOPE_ENUM_NAME,
+    description: 'Whether their queries are confined to branchId.',
+  })
+  dataScope!: DataScope;
 
   @ApiProperty({ type: String, format: 'date', example: '2026-01-15' })
   hiredOn!: string;
@@ -119,6 +129,9 @@ export class StaffProfileDto {
     enumName: EMPLOYMENT_STATUS_ENUM_NAME,
   })
   employmentStatus!: EmploymentStatus;
+
+  @ApiProperty({ enum: [...DATA_SCOPES], enumName: DATA_SCOPE_ENUM_NAME })
+  dataScope!: DataScope;
 
   @ApiProperty({ type: String, format: 'date' })
   hiredOn!: string;

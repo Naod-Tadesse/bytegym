@@ -45,6 +45,11 @@ export function FormSelectField({
               {label} {required && <span className="text-destructive">*</span>}
             </FieldLabel>
             <Select
+              // Without `items`, Base UI's Select.Value renders the raw value —
+              // so a uuid-valued field shows the uuid, and an enum shows
+              // `on_leave` rather than "On leave". It only looks right when the
+              // value happens to equal the label.
+              items={options}
               value={field.state.value ?? ''}
               onValueChange={(v) => field.handleChange(v)}
               disabled={disabled}

@@ -8,6 +8,8 @@ export interface AuthUser {
   staffCode: string;
   jobTitle: string;
   employmentStatus: 'active' | 'on_leave' | 'terminated';
+  /** `branch` hides everything cross-branch in the UI. */
+  dataScope: 'branch' | 'all';
   branchId: string;
   branchName: string;
   roles: string[];

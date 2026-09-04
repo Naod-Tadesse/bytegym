@@ -125,11 +125,21 @@ async function main() {
           userId: adminUser.id,
           staffCode: 'STF-000001',
           primaryBranchId: branch.id,
+          dataScope: 'all',
           jobTitle: 'Owner',
           hiredOn: new Date().toISOString().slice(0, 10),
         })
         .returning();
       console.log('admin staff profile created');
+    } else if (adminStaff.dataScope !== 'all') {
+      // Repairs an existing database: the data_scope column defaults to
+      // 'branch', which would otherwise lock the owner out of branch admin.
+      [adminStaff] = await db
+        .update(schema.staffProfiles)
+        .set({ dataScope: 'all' })
+        .where(eq(schema.staffProfiles.userId, adminUser.id))
+        .returning();
+      console.log('admin staff profile updated: dataScope -> all');
     } else {
       console.log('admin staff profile exists');
     }

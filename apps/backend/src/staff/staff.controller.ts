@@ -26,6 +26,7 @@ import {
   ApiNotFoundError,
 } from '../common/api-errors.decorator';
 import { ApiPaginatedResponse } from '../common/api-paginated-response.decorator';
+import { branchScopeOf } from '../common/branch-scope';
 import { PaginationDto } from '../common/pagination.dto';
 import {
   StaffDeletedDto,
@@ -33,6 +34,7 @@ import {
   StaffListItemDto,
   StaffProfileDto,
 } from './dto/staff-response.dto';
+import { ResetStaffPasswordDto } from './dto/reset-password.dto';
 import { CreateStaffDto, UpdateStaffDto } from './dto/staff.dto';
 import { StaffService } from './staff.service';
 
@@ -59,8 +61,11 @@ export class StaffController {
       'Soft-deleted users are excluded; terminated ones are not.',
   })
   @ApiPaginatedResponse(StaffListItemDto)
-  findAll(@Query() query: PaginationDto) {
-    return this.staffService.findAll(query);
+  findAll(
+    @Query() query: PaginationDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.staffService.findAll(query, branchScopeOf(user));
   }
 
   @Permissions('staff.read')
@@ -73,8 +78,11 @@ export class StaffController {
   @ApiOkResponse({ type: StaffDetailDto })
   @ApiBadRequestError()
   @ApiNotFoundError('Staff member not found')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.staffService.findOne(id);
+  findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.staffService.findOne(id, branchScopeOf(user));
   }
 
   @Permissions('staff.create')
@@ -94,8 +102,8 @@ export class StaffController {
   })
   @ApiBadRequestError()
   @ApiConflictError('That phone number or staff code is already in use')
-  create(@Body() dto: CreateStaffDto) {
-    return this.staffService.create(dto);
+  create(@Body() dto: CreateStaffDto, @CurrentUser() user: AuthenticatedUser) {
+    return this.staffService.create(dto, branchScopeOf(user));
   }
 
   @Permissions('staff.update')
@@ -110,8 +118,41 @@ export class StaffController {
   @ApiOkResponse({ type: StaffDetailDto })
   @ApiBadRequestError()
   @ApiNotFoundError('Staff member not found')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateStaffDto) {
-    return this.staffService.update(id, dto);
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateStaffDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.staffService.update(id, dto, branchScopeOf(user));
+  }
+
+  @Permissions('staff.resetPassword')
+  @Patch(':id/password')
+  @ApiOperation({
+    summary: 'Reset a staff member’s password',
+    description:
+      'For a locked-out colleague — the caller does not need their current ' +
+      'password. Every session of theirs is revoked, so they must sign in ' +
+      'again with the new one. Staff changing their own password use ' +
+      'PATCH /auth/change-password instead, which does require the old one.',
+  })
+  @StaffIdParam()
+  @ApiOkResponse({
+    type: StaffDeletedDto,
+    description: 'The id of the staff member whose password was reset.',
+  })
+  @ApiBadRequestError()
+  @ApiNotFoundError('Staff member not found')
+  resetPassword(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ResetStaffPasswordDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.staffService.resetPassword(
+      id,
+      dto.newPassword,
+      branchScopeOf(user),
+    );
   }
 
   @Permissions('staff.terminate')
@@ -137,6 +178,6 @@ export class StaffController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     // Identity comes from the token, never the body.
-    return this.staffService.remove(id, user.staffId);
+    return this.staffService.remove(id, user.staffId, branchScopeOf(user));
   }
 }

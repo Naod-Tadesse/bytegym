@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 
 import { toast } from '@/components/ui/toast';
@@ -34,21 +39,42 @@ export function useBranches(tableState: BranchTableState) {
   };
 }
 
-/** Every active branch, for select inputs. */
-export function useBranchOptions() {
-  const query = useQuery({
-    queryKey: ['branches', 'options'],
-    queryFn: () =>
+const OPTIONS_PAGE_SIZE = 20;
+
+/**
+ * Feeds a `DataCombobox`. Branches are a paginated endpoint, so this pages
+ * and searches server-side rather than pulling one oversized page and hoping
+ * it covers everything.
+ *
+ * `search` should already be debounced by the caller.
+ */
+export function useBranchOptions(search?: string) {
+  const query = useInfiniteQuery({
+    queryKey: ['branches', 'options', search ?? ''],
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) =>
       apiClient.get<PaginatedResponse<Branch>>('', {
-        params: { page: 1, limit: 100 },
+        params: {
+          page: pageParam,
+          limit: OPTIONS_PAGE_SIZE,
+          ...(search ? { search } : {}),
+        },
       }),
+    getNextPageParam: (lastPage) =>
+      lastPage.meta.page < lastPage.meta.totalPages
+        ? lastPage.meta.page + 1
+        : undefined,
   });
 
   return {
-    options: (query.data?.data ?? [])
+    options: (query.data?.pages ?? [])
+      .flatMap((page) => page.data)
+      // Retired branches stay assignable to nobody new.
       .filter((branch) => branch.isActive)
       .map((branch) => ({ label: branch.name, value: branch.id })),
-    isLoading: query.isLoading,
+    fetchNextPage: query.fetchNextPage,
+    hasNextPage: query.hasNextPage,
+    isLoading: query.isLoading || query.isFetchingNextPage,
   };
 }
 

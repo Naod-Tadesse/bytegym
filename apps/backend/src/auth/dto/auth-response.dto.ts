@@ -1,10 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 import {
+  DATA_SCOPE_ENUM_NAME,
+  DATA_SCOPES,
   EMPLOYMENT_STATUS_ENUM_NAME,
   EMPLOYMENT_STATUSES,
   USER_STATUS_ENUM_NAME,
   USER_STATUSES,
+  type DataScope,
   type EmploymentStatus,
   type UserStatus,
 } from '../../common/enums';
@@ -53,6 +56,15 @@ export class CurrentUserDto {
     enumName: EMPLOYMENT_STATUS_ENUM_NAME,
   })
   employmentStatus!: EmploymentStatus;
+
+  @ApiProperty({
+    enum: [...DATA_SCOPES],
+    enumName: DATA_SCOPE_ENUM_NAME,
+    description:
+      'At `branch` the UI hides anything cross-branch — the Branches page, ' +
+      'and the Branch column on the staff table.',
+  })
+  dataScope!: DataScope;
 
   @ApiProperty({ type: String, format: 'uuid' })
   branchId!: string;

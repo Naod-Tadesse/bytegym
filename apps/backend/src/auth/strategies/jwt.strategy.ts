@@ -20,6 +20,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return {
       userId: payload.sub,
       staffId: payload.staffId,
+      branchId: payload.branchId,
+      // A token minted before data_scope existed has neither claim; treat it
+      // as the narrower scope rather than handing it the whole gym.
+      dataScope: payload.dataScope ?? 'branch',
       permissions: payload.permissions ?? [],
     };
   }

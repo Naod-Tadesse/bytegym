@@ -165,6 +165,8 @@
       "lastName": "Last name",
       "phone": "Phone",
       "password": "Password",
+      "confirmPassword": "Confirm password",
+      "newPassword": "New password",
       "dateOfBirth": "Date of birth",
       "gender": "Gender",
       "staffCode": "Staff code",
@@ -173,6 +175,7 @@
       "hiredOn": "Hired on",
       "terminatedOn": "Terminated on",
       "employmentStatus": "Employment status",
+      "dataScope": "Data access",
       "roles": "Roles",
       "lastLogin": "Last signed in"
     },
@@ -180,12 +183,18 @@
       "pickDate": "Pick a date",
       "gender": "Select gender",
       "branch": "Select a branch",
+      "searchBranch": "Search branches…",
       "jobTitle": "Receptionist",
       "roles": "Select roles"
     },
     "gender": {
       "male": "Male",
       "female": "Female"
+    },
+    "dataScope": {
+      "branch": "Their branch only",
+      "all": "All branches",
+      "hint": "All-branch staff see every branch's data and can administer branches."
     },
     "employmentStatus": {
       "active": "Active",
@@ -202,6 +211,12 @@
     "detail": {
       "noRoles": "No roles assigned",
       "neverSignedIn": "Never"
+    },
+    "resetPassword": {
+      "action": "Reset password",
+      "title": "Reset password",
+      "description": "Set a new password for {{name}}. You do not need their current one. They will be signed out everywhere and must use the new password.",
+      "confirm": "Reset password"
     },
     "terminate": {
       "title": "Terminate staff member?",
@@ -235,15 +250,9 @@
   "nav": {
     "groups": {
       "overview": "Overview",
-      "members": "Members",
-      "operations": "Operations",
       "admin": "Admin"
     },
     "dashboard": "Dashboard",
-    "members": "Members",
-    "checkIns": "Check-ins",
-    "classes": "Classes",
-    "reports": "Reports",
     "staff": "Staff",
     "roles": "Roles",
     "branches": "Branches",

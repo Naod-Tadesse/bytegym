@@ -1,4 +1,9 @@
-import { employmentStatus, genderType, userStatus } from '../database/schema';
+import {
+  dataScope,
+  employmentStatus,
+  genderType,
+  userStatus,
+} from '../database/schema';
 
 /**
  * Sourced from the Drizzle pgEnums rather than retyped, so the OpenAPI schema
@@ -12,11 +17,14 @@ import { employmentStatus, genderType, userStatus } from '../database/schema';
 export const GENDERS = genderType.enumValues;
 export const USER_STATUSES = userStatus.enumValues;
 export const EMPLOYMENT_STATUSES = employmentStatus.enumValues;
+export const DATA_SCOPES = dataScope.enumValues;
 
 export const GENDER_ENUM_NAME = 'Gender';
 export const USER_STATUS_ENUM_NAME = 'UserStatus';
 export const EMPLOYMENT_STATUS_ENUM_NAME = 'EmploymentStatus';
+export const DATA_SCOPE_ENUM_NAME = 'DataScope';
 
 export type Gender = (typeof GENDERS)[number];
 export type UserStatus = (typeof USER_STATUSES)[number];
 export type EmploymentStatus = (typeof EMPLOYMENT_STATUSES)[number];
+export type DataScope = (typeof DATA_SCOPES)[number];

@@ -14,10 +14,13 @@ import {
 } from 'class-validator';
 
 import {
+  DATA_SCOPE_ENUM_NAME,
+  DATA_SCOPES,
   EMPLOYMENT_STATUS_ENUM_NAME,
   EMPLOYMENT_STATUSES,
   GENDER_ENUM_NAME,
   GENDERS,
+  type DataScope,
   type EmploymentStatus,
   type Gender,
 } from '../../common/enums';
@@ -94,6 +97,18 @@ export class CreateStaffDto {
   @IsUUID()
   primaryBranchId!: string;
 
+  @ApiPropertyOptional({
+    enum: [...DATA_SCOPES],
+    enumName: DATA_SCOPE_ENUM_NAME,
+    default: 'branch',
+    description:
+      '`branch` confines every query to primaryBranchId; `all` removes the ' +
+      'filter. Only a caller who already has `all` may grant it.',
+  })
+  @IsOptional()
+  @IsIn([...DATA_SCOPES])
+  dataScope?: DataScope;
+
   @ApiProperty({ type: String, maxLength: 80, example: 'Receptionist' })
   @IsString()
   @IsNotEmpty()
@@ -143,6 +158,17 @@ export class UpdateStaffDto {
   @IsOptional()
   @IsUUID()
   primaryBranchId?: string;
+
+  @ApiPropertyOptional({
+    enum: [...DATA_SCOPES],
+    enumName: DATA_SCOPE_ENUM_NAME,
+    description:
+      'Changing this revokes the member’s sessions — their live token carries ' +
+      'the old scope until they sign in again.',
+  })
+  @IsOptional()
+  @IsIn([...DATA_SCOPES])
+  dataScope?: DataScope;
 
   @ApiPropertyOptional({ type: String, maxLength: 80 })
   @IsOptional()

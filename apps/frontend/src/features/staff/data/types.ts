@@ -1,6 +1,9 @@
 import type { TableState } from '@/services/pagination';
 
 export type EmploymentStatus = 'active' | 'on_leave' | 'terminated';
+
+/** `branch` confines every query to the staff member's branch. */
+export type DataScope = 'branch' | 'all';
 export type UserStatus = 'active' | 'suspended' | 'deactivated';
 export type Gender = 'male' | 'female';
 
@@ -10,6 +13,7 @@ export interface StaffListItem {
   staffCode: string;
   jobTitle: string;
   employmentStatus: EmploymentStatus;
+  dataScope: DataScope;
   hiredOn: string;
   firstName: string;
   lastName: string;

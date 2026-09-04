@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Delete02Icon,
+  LockPasswordIcon,
   MoreHorizontalIcon,
   PencilEdit02Icon,
   ViewIcon,
@@ -34,6 +35,7 @@ export function StaffRowActions({
 
   const canRead = hasPermission('staff.read');
   const canUpdate = hasPermission('staff.update');
+  const canResetPassword = hasPermission('staff.resetPassword');
   // The API refuses this with a 403; hiding it saves the round trip.
   const isSelf = currentUser?.id === staffMember.userId;
   const canTerminate =
@@ -41,10 +43,15 @@ export function StaffRowActions({
     !isSelf &&
     staffMember.employmentStatus !== 'terminated';
 
-  if (!canRead && !canUpdate && !canTerminate) return null;
+  if (!canRead && !canUpdate && !canResetPassword && !canTerminate) return null;
 
   const goTo = (to: '/staff/$staffId' | '/staff/$staffId/edit') => () =>
     navigate({ to, params: { staffId: staffMember.userId } });
+
+  const openDialog = (dialog: 'resetPassword' | 'terminate') => () => {
+    setCurrentRow(staffMember);
+    setOpen(dialog);
+  };
 
   return (
     <DropdownMenu>
@@ -65,15 +72,18 @@ export function StaffRowActions({
             {t('actions.edit')}
           </DropdownMenuItem>
         )}
+        {canResetPassword && (
+          <DropdownMenuItem onClick={openDialog('resetPassword')}>
+            <HugeiconsIcon icon={LockPasswordIcon} data-icon="inline-start" />
+            {t('staff.resetPassword.action')}
+          </DropdownMenuItem>
+        )}
         {canTerminate && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"
-              onClick={() => {
-                setCurrentRow(staffMember);
-                setOpen('terminate');
-              }}
+              onClick={openDialog('terminate')}
             >
               <HugeiconsIcon icon={Delete02Icon} data-icon="inline-start" />
               {t('staff.actions.terminate')}

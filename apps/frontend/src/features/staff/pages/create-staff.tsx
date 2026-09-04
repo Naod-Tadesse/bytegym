@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
 import {
+  FormComboboxField,
   FormDatePickerField,
   FormMultiSelectField,
   FormSelectField,
@@ -12,9 +14,12 @@ import { FormPageHeader } from '@/components/form-page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
+import { useCurrentUser } from '@/features/auth/hooks/use-auth';
 import { useBranchOptions } from '@/features/branches/hooks/use-branches';
 import { useRoleOptions } from '@/features/roles/hooks/use-roles';
+import { useDebounce } from '@/hooks/use-debounce';
 import { createStaffSchema, orUndefined } from '../data/schema';
+import { useDataScopeOptions } from '../hooks/use-data-scope-options';
 import { useGenderOptions } from '../hooks/use-gender-options';
 import { useCreateStaff } from '../hooks/use-staff';
 
@@ -22,10 +27,24 @@ export function CreateStaff() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { createStaff, isPending } = useCreateStaff();
-  const { options: branchOptions, isLoading: isLoadingBranches } =
-    useBranchOptions();
+
+  // Branches are paginated, so the picker searches and pages server-side.
+  const [branchSearch, setBranchSearch] = useState('');
+  const {
+    options: branchOptions,
+    fetchNextPage: fetchMoreBranches,
+    hasNextPage: hasMoreBranches,
+    isLoading: isLoadingBranches,
+  } = useBranchOptions(useDebounce(branchSearch));
+
   const { options: roleOptions, isLoading: isLoadingRoles } = useRoleOptions();
   const genderOptions = useGenderOptions();
+  const dataScopeOptions = useDataScopeOptions();
+
+  // A branch-scoped creator can only staff their own branch, and cannot hand
+  // out all-branch access — the API refuses both, so don't offer them.
+  const { data: currentUser } = useCurrentUser();
+  const canChooseBranch = currentUser?.dataScope === 'all';
 
   const goToList = () => navigate({ to: '/staff' });
 
@@ -35,12 +54,18 @@ export function CreateStaff() {
       lastName: '',
       phone: '',
       password: '',
+      confirmPassword: '',
       dateOfBirth: '',
       gender: '' as '' | 'male' | 'female',
       staffCode: '',
-      primaryBranchId: '',
+      // Pre-filled and hidden for a scoped creator — it is the only branch
+      // they could pick, and the API would reject anything else.
+      primaryBranchId: canChooseBranch ? '' : (currentUser?.branchId ?? ''),
       jobTitle: '',
       hiredOn: '',
+      // A scoped creator can only ever produce branch-scoped staff at their
+      // own branch, so both fields are pre-set and hidden below.
+      dataScope: 'branch' as 'branch' | 'all',
       roleIds: [] as string[],
     },
     validators: { onSubmit: createStaffSchema },
@@ -57,6 +82,7 @@ export function CreateStaff() {
         primaryBranchId: value.primaryBranchId,
         jobTitle: value.jobTitle.trim(),
         hiredOn: value.hiredOn,
+        dataScope: value.dataScope,
         roleIds: value.roleIds,
       }),
   });
@@ -116,6 +142,15 @@ export function CreateStaff() {
             autoComplete="new-password"
             required
           />
+          {/* Typo guard only — the API never receives this. */}
+          <FormTextField
+            form={form}
+            name="confirmPassword"
+            label={t('staff.fields.confirmPassword')}
+            type="password"
+            autoComplete="new-password"
+            required
+          />
           <FormDatePickerField
             form={form}
             name="dateOfBirth"
@@ -144,15 +179,30 @@ export function CreateStaff() {
             placeholder={t('staff.placeholders.jobTitle')}
             required
           />
-          <FormSelectField
-            form={form}
-            name="primaryBranchId"
-            label={t('staff.fields.branch')}
-            placeholder={t('staff.placeholders.branch')}
-            options={branchOptions}
-            disabled={isLoadingBranches}
-            required
-          />
+          {canChooseBranch && (
+            <>
+              <FormComboboxField
+                form={form}
+                name="primaryBranchId"
+                label={t('staff.fields.branch')}
+                placeholder={t('staff.placeholders.branch')}
+                searchPlaceholder={t('staff.placeholders.searchBranch')}
+                options={branchOptions}
+                onSearch={setBranchSearch}
+                onScroll={fetchMoreBranches}
+                hasNext={hasMoreBranches}
+                isLoading={isLoadingBranches}
+                required
+              />
+              <FormSelectField
+                form={form}
+                name="dataScope"
+                label={t('staff.fields.dataScope')}
+                options={dataScopeOptions}
+                required
+              />
+            </>
+          )}
           <FormDatePickerField
             form={form}
             name="hiredOn"

@@ -28,6 +28,14 @@ export const SEED_PERMISSIONS: NewPermission[] = [
   { name: 'staff.create', displayName: 'Add staff', group: 'Staff' },
   { name: 'staff.update', displayName: 'Edit staff', group: 'Staff' },
   { name: 'staff.terminate', displayName: 'Terminate staff', group: 'Staff' },
+  {
+    name: 'staff.resetPassword',
+    displayName: 'Reset staff passwords',
+    description:
+      'Set a new password for another staff member without knowing their old ' +
+      'one, for when they are locked out. Signs them out everywhere.',
+    group: 'Staff',
+  },
 
   // Access control
   { name: 'role.list', displayName: 'View roles', group: 'Access control' },

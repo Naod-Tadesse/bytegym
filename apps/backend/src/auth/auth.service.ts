@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { and, eq, isNull } from 'drizzle-orm';
 
+import type { DataScope } from '../common/enums';
 import type { Database } from '../database/database.client';
 import { DRIZZLE } from '../database/database.constants';
 import * as schema from '../database/schema';
@@ -144,6 +145,7 @@ export class AuthService implements OnModuleInit {
         staffCode: schema.staffProfiles.staffCode,
         jobTitle: schema.staffProfiles.jobTitle,
         employmentStatus: schema.staffProfiles.employmentStatus,
+        dataScope: schema.staffProfiles.dataScope,
         branchId: schema.branches.id,
         branchName: schema.branches.name,
       })
@@ -173,7 +175,7 @@ export class AuthService implements OnModuleInit {
     return {
       ...row,
       roles: roles.map((role) => role.name),
-      permissions: await this.resolvePermissions(user.staffId),
+      permissions: await this.resolvePermissions(user.staffId, row.dataScope),
     };
   }
 
@@ -208,8 +210,15 @@ export class AuthService implements OnModuleInit {
     userId: string,
     staffId: string,
   ): Promise<TokenPair> {
-    const permissions = await this.resolvePermissions(staffId);
-    const payload: JwtPayload = { sub: userId, staffId, permissions };
+    const { branchId, dataScope } = await this.loadScope(staffId);
+    const permissions = await this.resolvePermissions(staffId, dataScope);
+    const payload: JwtPayload = {
+      sub: userId,
+      staffId,
+      branchId,
+      dataScope,
+      permissions,
+    };
 
     const accessToken = this.jwt.sign(payload);
 
@@ -236,7 +245,28 @@ export class AuthService implements OnModuleInit {
     return { accessToken, refreshToken };
   }
 
-  private async resolvePermissions(staffId: string): Promise<string[]> {
+  /** The staff member's branch and how far their queries reach. */
+  private async loadScope(
+    staffId: string,
+  ): Promise<{ branchId: string; dataScope: DataScope }> {
+    const [row] = await this.db
+      .select({
+        branchId: schema.staffProfiles.primaryBranchId,
+        dataScope: schema.staffProfiles.dataScope,
+      })
+      .from(schema.staffProfiles)
+      .where(eq(schema.staffProfiles.userId, staffId));
+
+    if (!row) {
+      throw new UnauthorizedException('This account cannot sign in');
+    }
+    return row;
+  }
+
+  private async resolvePermissions(
+    staffId: string,
+    dataScope: DataScope,
+  ): Promise<string[]> {
     const rows = await this.db
       .selectDistinct({ name: schema.permissions.name })
       .from(schema.userRoles)
@@ -257,7 +287,16 @@ export class AuthService implements OnModuleInit {
         ),
       );
 
-    return rows.map((row) => row.name);
+    const names = rows.map((row) => row.name);
+
+    // Branch-scoped staff have no business administering branches — they can
+    // only ever see one. Filtering here rather than in the roles means a single
+    // "Manager" role works at either scope, and it lands on both the token
+    // (so the guard 403s) and GET /auth/me (so the sidebar and route guards
+    // hide the page) without either of them knowing about data_scope.
+    return dataScope === 'all'
+      ? names
+      : names.filter((name) => !name.startsWith('branch.'));
   }
 
   private async revokeAllSessions(userId: string): Promise<void> {

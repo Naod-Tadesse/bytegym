@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useForm } from '@tanstack/react-form';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
 import {
+  FormComboboxField,
   FormDatePickerField,
   FormMultiSelectField,
   FormSelectField,
@@ -13,11 +15,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
+import { useCurrentUser } from '@/features/auth/hooks/use-auth';
 import { useBranchOptions } from '@/features/branches/hooks/use-branches';
 import { useRoleOptions } from '@/features/roles/hooks/use-roles';
+import { useDebounce } from '@/hooks/use-debounce';
 import { useEmploymentStatusOptions } from '../components/employment-status-badge';
 import { editStaffSchema, orUndefined } from '../data/schema';
 import type { StaffDetail } from '../data/types';
+import { useDataScopeOptions } from '../hooks/use-data-scope-options';
 import { useGenderOptions } from '../hooks/use-gender-options';
 import { useStaffMember, useUpdateStaff } from '../hooks/use-staff';
 
@@ -35,11 +40,24 @@ function EditStaffForm({ staffMember }: { staffMember: StaffDetail }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { updateStaff, isPending } = useUpdateStaff();
-  const { options: branchOptions, isLoading: isLoadingBranches } =
-    useBranchOptions();
+  // Branches are paginated, so the picker searches and pages server-side.
+  const [branchSearch, setBranchSearch] = useState('');
+  const {
+    options: branchOptions,
+    fetchNextPage: fetchMoreBranches,
+    hasNextPage: hasMoreBranches,
+    isLoading: isLoadingBranches,
+  } = useBranchOptions(useDebounce(branchSearch));
+
   const { options: roleOptions, isLoading: isLoadingRoles } = useRoleOptions();
   const genderOptions = useGenderOptions();
   const statusOptions = useEmploymentStatusOptions();
+  const dataScopeOptions = useDataScopeOptions();
+
+  // Same rule as create: a scoped editor cannot move someone to another branch
+  // or promote them to all-branch access, so neither control is offered.
+  const { data: currentUser } = useCurrentUser();
+  const canChooseBranch = currentUser?.dataScope === 'all';
 
   const goToDetail = () =>
     navigate({
@@ -56,6 +74,7 @@ function EditStaffForm({ staffMember }: { staffMember: StaffDetail }) {
       primaryBranchId: staffMember.branchId,
       jobTitle: staffMember.jobTitle,
       employmentStatus: staffMember.employmentStatus,
+      dataScope: staffMember.dataScope,
       roleIds: staffMember.roles.map((role) => role.id),
     },
     validators: { onSubmit: editStaffSchema },
@@ -70,6 +89,9 @@ function EditStaffForm({ staffMember }: { staffMember: StaffDetail }) {
           primaryBranchId: value.primaryBranchId,
           jobTitle: value.jobTitle.trim(),
           employmentStatus: value.employmentStatus,
+          // Omitted entirely by a scoped editor, so the API never sees an
+          // unchanged value it would reject.
+          ...(canChooseBranch ? { dataScope: value.dataScope } : {}),
           roleIds: value.roleIds,
         },
       }),
@@ -133,15 +155,37 @@ function EditStaffForm({ staffMember }: { staffMember: StaffDetail }) {
             label={t('staff.fields.jobTitle')}
             required
           />
-          <FormSelectField
-            form={form}
-            name="primaryBranchId"
-            label={t('staff.fields.branch')}
-            placeholder={t('staff.placeholders.branch')}
-            options={branchOptions}
-            disabled={isLoadingBranches}
-            required
-          />
+          {canChooseBranch && (
+            <>
+              <FormComboboxField
+                form={form}
+                name="primaryBranchId"
+                label={t('staff.fields.branch')}
+                placeholder={t('staff.placeholders.branch')}
+                searchPlaceholder={t('staff.placeholders.searchBranch')}
+                options={branchOptions}
+                // The saved branch may sit on a page that was never loaded, or
+                // be filtered out by a search — without this the trigger
+                // renders empty.
+                selectedOption={{
+                  value: staffMember.branchId,
+                  label: staffMember.branchName,
+                }}
+                onSearch={setBranchSearch}
+                onScroll={fetchMoreBranches}
+                hasNext={hasMoreBranches}
+                isLoading={isLoadingBranches}
+                required
+              />
+              <FormSelectField
+                form={form}
+                name="dataScope"
+                label={t('staff.fields.dataScope')}
+                options={dataScopeOptions}
+                required
+              />
+            </>
+          )}
           <FormSelectField
             form={form}
             name="employmentStatus"

@@ -8,6 +8,7 @@ import {
   type PaginatedResponse,
 } from '@/services/pagination';
 import type {
+  DataScope,
   StaffDetail,
   StaffListItem,
   StaffTableState,
@@ -27,6 +28,7 @@ export interface CreateStaffPayload {
   primaryBranchId: string;
   jobTitle: string;
   hiredOn: string;
+  dataScope: DataScope;
   roleIds: string[];
 }
 
@@ -109,6 +111,35 @@ export function useUpdateStaff() {
   });
 
   return { updateStaff: mutation.mutate, isPending: mutation.isPending };
+}
+
+/** Administrative reset — no current password, and it signs them out. */
+export function useResetStaffPassword(onSuccess?: () => void) {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({
+      staffId,
+      newPassword,
+    }: {
+      staffId: string;
+      newPassword: string;
+    }) => apiClient.patch(`/${staffId}/password`, { newPassword }),
+    onSuccess: () => {
+      // Nothing on the staff row changes, but their sessions are now revoked.
+      queryClient.invalidateQueries({ queryKey: ['staff'] });
+      toast.add({
+        title: 'Password reset — they must sign in again',
+        type: 'success',
+      });
+      onSuccess?.();
+    },
+  });
+
+  return {
+    resetPasswordAsync: mutation.mutateAsync,
+    isPending: mutation.isPending,
+  };
 }
 
 export function useTerminateStaff() {

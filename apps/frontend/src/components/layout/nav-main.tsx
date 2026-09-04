@@ -7,13 +7,12 @@ import { cn } from '@/lib/utils';
 import {
   SidebarGroup,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { navGroups } from './sidebar-data';
 
-export function NavMain({ checkInCount }: { checkInCount?: number }) {
+export function NavMain() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const { hasPermission } = usePermissions();
@@ -62,9 +61,6 @@ export function NavMain({ checkInCount }: { checkInCount?: number }) {
                 <HugeiconsIcon icon={item.icon} />
                 <span>{t(item.titleKey)}</span>
               </SidebarMenuButton>
-              {item.showCheckInBadge && checkInCount != null && (
-                <SidebarMenuBadge>{checkInCount}</SidebarMenuBadge>
-              )}
             </SidebarMenuItem>
           );
         })}

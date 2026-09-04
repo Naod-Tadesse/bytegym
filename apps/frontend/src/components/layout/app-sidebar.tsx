@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/sidebar';
 import { NavMain } from './nav-main';
 
-export function AppSidebar({ checkInCount }: { checkInCount?: number }) {
+export function AppSidebar() {
   const { t } = useTranslation();
 
   return (
@@ -50,7 +50,7 @@ export function AppSidebar({ checkInCount }: { checkInCount?: number }) {
       </SidebarHeader>
 
       <SidebarContent>
-        <NavMain checkInCount={checkInCount} />
+        <NavMain />
       </SidebarContent>
 
       {/* The theme switch lives here; the user block moved to the header. */}

@@ -6,6 +6,7 @@ import { DataTableColumnHeader } from '@/components/table/column-header';
 import type { DataTableFeatures } from '@/components/table/data-table-features';
 import { rowNumberColumn } from '@/components/table/row-number-column';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useCurrentUser } from '@/features/auth/hooks/use-auth';
 import { Badge } from '@/components/ui/badge';
 import type { StaffListItem } from '../data/types';
 import { StaffRowActions } from './data-table-row-actions';
@@ -25,111 +26,118 @@ export function useStaffColumns({
   limit: number;
 }) {
   const { t } = useTranslation();
+  const { data: currentUser } = useCurrentUser();
+  // At `branch` scope every row is the caller's own branch, so the column
+  // would repeat one value down the page.
+  const showBranch = currentUser?.dataScope === 'all';
 
   return useMemo(
     () =>
-      columnHelper.columns([
-        rowNumberColumn(columnHelper, { page, limit }),
-        columnHelper.accessor('firstName', {
-          id: 'name',
-          header: ({ column }) => (
-            <DataTableColumnHeader
-              column={column}
-              title={t('staff.columns.name')}
-            />
-          ),
-          cell: ({ row }) => (
-            <div className="flex items-center gap-3">
-              <Avatar>
-                <AvatarFallback>
-                  {initials(row.original.firstName, row.original.lastName)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <span className="font-medium">
-                  {row.original.firstName} {row.original.lastName}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {row.original.staffCode}
-                </span>
-              </div>
-            </div>
-          ),
-        }),
-        columnHelper.accessor('phone', {
-          header: ({ column }) => (
-            <DataTableColumnHeader
-              column={column}
-              title={t('staff.columns.phone')}
-            />
-          ),
-          cell: ({ row }) => (
-            <span className="tabular-nums text-muted-foreground">
-              {row.original.phone}
-            </span>
-          ),
-        }),
-        columnHelper.accessor('jobTitle', {
-          header: ({ column }) => (
-            <DataTableColumnHeader
-              column={column}
-              title={t('staff.columns.jobTitle')}
-            />
-          ),
-          cell: ({ row }) => <span>{row.original.jobTitle}</span>,
-        }),
-        columnHelper.accessor('branchName', {
-          header: ({ column }) => (
-            <DataTableColumnHeader
-              column={column}
-              title={t('staff.columns.branch')}
-            />
-          ),
-          cell: ({ row }) => (
-            <span className="text-muted-foreground">
-              {row.original.branchName}
-            </span>
-          ),
-        }),
-        columnHelper.display({
-          id: 'roles',
-          header: () => t('staff.columns.roles'),
-          cell: ({ row }) =>
-            row.original.roles.length === 0 ? (
-              <span className="text-muted-foreground">—</span>
-            ) : (
-              <div className="flex flex-wrap gap-1">
-                {row.original.roles.map((role) => (
-                  <Badge key={role.id} variant="secondary">
-                    {role.name}
-                  </Badge>
-                ))}
+      columnHelper
+        .columns([
+          rowNumberColumn(columnHelper, { page, limit }),
+          columnHelper.accessor('firstName', {
+            id: 'name',
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('staff.columns.name')}
+              />
+            ),
+            cell: ({ row }) => (
+              <div className="flex items-center gap-3">
+                <Avatar>
+                  <AvatarFallback>
+                    {initials(row.original.firstName, row.original.lastName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="font-medium">
+                    {row.original.firstName} {row.original.lastName}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {row.original.staffCode}
+                  </span>
+                </div>
               </div>
             ),
-        }),
-        columnHelper.accessor('employmentStatus', {
-          header: ({ column }) => (
-            <DataTableColumnHeader
-              column={column}
-              title={t('staff.columns.status')}
-            />
-          ),
-          cell: ({ row }) => (
-            <EmploymentStatusBadge status={row.original.employmentStatus} />
-          ),
-        }),
-        columnHelper.display({
-          id: 'actions',
-          enableHiding: false,
-          enableSorting: false,
-          cell: ({ row }) => (
-            // The row itself navigates; the menu must not trigger that too.
-            <div onClick={(event) => event.stopPropagation()}>
-              <StaffRowActions staffMember={row.original} />
-            </div>
-          ),
-        }),
-      ]),
-    [t, page, limit],
+          }),
+          columnHelper.accessor('phone', {
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('staff.columns.phone')}
+              />
+            ),
+            cell: ({ row }) => (
+              <span className="tabular-nums text-muted-foreground">
+                {row.original.phone}
+              </span>
+            ),
+          }),
+          columnHelper.accessor('jobTitle', {
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('staff.columns.jobTitle')}
+              />
+            ),
+            cell: ({ row }) => <span>{row.original.jobTitle}</span>,
+          }),
+          columnHelper.accessor('branchName', {
+            id: 'branchName',
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('staff.columns.branch')}
+              />
+            ),
+            cell: ({ row }) => (
+              <span className="text-muted-foreground">
+                {row.original.branchName}
+              </span>
+            ),
+          }),
+          columnHelper.display({
+            id: 'roles',
+            header: () => t('staff.columns.roles'),
+            cell: ({ row }) =>
+              row.original.roles.length === 0 ? (
+                <span className="text-muted-foreground">—</span>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {row.original.roles.map((role) => (
+                    <Badge key={role.id} variant="secondary">
+                      {role.name}
+                    </Badge>
+                  ))}
+                </div>
+              ),
+          }),
+          columnHelper.accessor('employmentStatus', {
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('staff.columns.status')}
+              />
+            ),
+            cell: ({ row }) => (
+              <EmploymentStatusBadge status={row.original.employmentStatus} />
+            ),
+          }),
+          columnHelper.display({
+            id: 'actions',
+            enableHiding: false,
+            enableSorting: false,
+            cell: ({ row }) => (
+              // The row itself navigates; the menu must not trigger that too.
+              <div onClick={(event) => event.stopPropagation()}>
+                <StaffRowActions staffMember={row.original} />
+              </div>
+            ),
+          }),
+        ])
+        .filter((column) => showBranch || column.id !== 'branchName'),
+    [t, page, limit, showBranch],
   );
 }

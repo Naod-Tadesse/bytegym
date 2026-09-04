@@ -1,3 +1,4 @@
+import { ResetPasswordDialog } from '../actions/reset-password-dialog';
 import { TerminateStaffDialog } from '../actions/terminate-staff';
 import { useStaffContext } from './staff-context';
 
@@ -7,16 +8,27 @@ export function StaffDialogs() {
 
   if (!currentRow) return null;
 
+  const close = (isOpen: boolean) => {
+    if (isOpen) return;
+    setOpen(null);
+    setCurrentRow(null);
+  };
+
   return (
-    <TerminateStaffDialog
-      key={`terminate-${currentRow.userId}`}
-      open={open === 'terminate'}
-      onOpenChange={(isOpen) => {
-        if (isOpen) return;
-        setOpen(null);
-        setCurrentRow(null);
-      }}
-      staffMember={currentRow}
-    />
+    <>
+      <TerminateStaffDialog
+        // Keyed by row: retargeting remounts with the right state.
+        key={`terminate-${currentRow.userId}`}
+        open={open === 'terminate'}
+        onOpenChange={close}
+        staffMember={currentRow}
+      />
+      <ResetPasswordDialog
+        key={`reset-${currentRow.userId}`}
+        open={open === 'resetPassword'}
+        onOpenChange={close}
+        staffMember={currentRow}
+      />
+    </>
   );
 }

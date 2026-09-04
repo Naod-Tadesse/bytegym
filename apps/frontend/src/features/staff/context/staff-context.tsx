@@ -2,8 +2,8 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 
 import type { StaffListItem } from '../data/types';
 
-/** Create and edit are pages — only the destructive action is a dialog. */
-export type StaffDialogType = 'terminate';
+/** Create and edit are pages; these two are small enough to be dialogs. */
+export type StaffDialogType = 'terminate' | 'resetPassword';
 
 interface StaffContextValue {
   open: StaffDialogType | null;
