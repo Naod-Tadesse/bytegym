@@ -27,24 +27,29 @@ import {
 } from '../common/api-errors.decorator';
 import { ApiPaginatedResponse } from '../common/api-paginated-response.decorator';
 import { branchScopeOf } from '../common/branch-scope';
-import { PaginationDto } from '../common/pagination.dto';
 import {
   StaffDeletedDto,
   StaffDetailDto,
   StaffListItemDto,
   StaffProfileDto,
 } from './dto/staff-response.dto';
-import { ResetStaffPasswordDto } from './dto/reset-password.dto';
+import {
+  GrantStaffAccessDto,
+  ResetStaffPasswordDto,
+  SetAccountStatusDto,
+  SetStaffAuthorizationDto,
+} from './dto/reset-password.dto';
 import { CreateStaffDto, UpdateStaffDto } from './dto/staff.dto';
+import { StaffQueryDto } from './dto/staff-query.dto';
 import { StaffService } from './staff.service';
 
-/** Shared by every route taking a staff id — which is the user id. */
+/** Shared by every route taking a staff id — which is the person id. */
 const StaffIdParam = () =>
   ApiParam({
     name: 'id',
     format: 'uuid',
     description:
-      'The staff member’s user id (the `userId` field in responses).',
+      'The staff member’s person id (the `personId` field in responses).',
   });
 
 @ApiTags('Staff')
@@ -58,11 +63,11 @@ export class StaffController {
     summary: 'List staff',
     description:
       '`search` matches first name, last name, phone or staff code. ' +
-      'Soft-deleted users are excluded; terminated ones are not.',
+      'Soft-deleted people are excluded; terminated ones are not.',
   })
   @ApiPaginatedResponse(StaffListItemDto)
   findAll(
-    @Query() query: PaginationDto,
+    @Query() query: StaffQueryDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.staffService.findAll(query, branchScopeOf(user));
@@ -90,15 +95,15 @@ export class StaffController {
   @ApiOperation({
     summary: 'Create a staff member',
     description:
-      'Writes the user, the staff profile and the role grants in one ' +
+      'Writes the person, the staff row and the role grants in one ' +
       'transaction. They can sign in immediately with the phone and password ' +
       'given here.',
   })
   @ApiCreatedResponse({
     type: StaffProfileDto,
     description:
-      'The staff profile row only — narrower than GET /staff/{id}, with no ' +
-      'names, phone, branch name or roles. Refetch for the full record.',
+      'The staff row only — narrower than GET /staff/{id}, with no names, ' +
+      'phone, branch name or roles. Refetch for the full record.',
   })
   @ApiBadRequestError()
   @ApiConflictError('That phone number or staff code is already in use')
@@ -155,21 +160,139 @@ export class StaffController {
     );
   }
 
+  @Permissions('staff.grantAccess')
+  @Post(':id/access')
+  @ApiOperation({
+    summary: 'Give a staff member system access',
+    description:
+      'Creates their account — the row whose existence IS the right to sign ' +
+      'in — and its role grants, in one transaction. Use this for an employee ' +
+      'hired without a login, not for a locked-out one (that is ' +
+      'PATCH /:id/password).\n\n' +
+      '400s when their job title has `canHaveAccount: false` — a cleaner is a ' +
+      'full employee the API will not hand credentials to — and when they are ' +
+      'terminated. 409s when they already have access.',
+  })
+  @StaffIdParam()
+  @ApiOkResponse({
+    type: StaffDeletedDto,
+    description: 'The id of the staff member who was given access.',
+  })
+  @ApiBadRequestError()
+  @ApiNotFoundError('Staff member not found')
+  @ApiConflictError('This staff member already has system access')
+  grantAccess(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: GrantStaffAccessDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.staffService.grantAccess(id, dto, branchScopeOf(user));
+  }
+
+  @Permissions('role.assign')
+  @Patch(':id/authorization')
+  @ApiOperation({
+    summary: 'Set a staff member’s roles and data scope',
+    description:
+      'The access half of managing someone, deliberately separate from ' +
+      'PATCH /staff/{id}: this answers to `role.assign`, so access can be ' +
+      'managed without also being able to edit names and job titles.\n\n' +
+      '`roleIds` is a full replace — anything omitted is revoked; omit the ' +
+      'field entirely to leave roles alone. Both fields are baked into the ' +
+      'access token, so either changing revokes their staff sessions.\n\n' +
+      '400s when they have no account: roles hang off one, so there is ' +
+      'nothing to authorise.',
+  })
+  @StaffIdParam()
+  @ApiOkResponse({ type: StaffDetailDto })
+  @ApiBadRequestError()
+  @ApiNotFoundError('Staff member not found')
+  setAuthorization(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetStaffAuthorizationDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.staffService.setAuthorization(id, dto, branchScopeOf(user));
+  }
+
+  @Permissions('staff.revokeAccess')
+  @Patch(':id/access')
+  @ApiOperation({
+    summary: 'Disable or re-enable a staff member’s login',
+    description:
+      'The reversible middle ground between doing nothing and revoking. ' +
+      '`disabled` refuses sign-in and revokes their live sessions but KEEPS ' +
+      'the password, so setting `active` hands back the credential they ' +
+      'already know — use it for a suspension you intend to lift. Revoking ' +
+      '(DELETE) deletes the account outright and their roles with it.\n\n' +
+      'Also 403s when {id} is your own account and you are disabling: you ' +
+      'cannot lock yourself out.',
+  })
+  @StaffIdParam()
+  @ApiOkResponse({
+    type: StaffDeletedDto,
+    description: 'The id of the staff member whose login status changed.',
+  })
+  @ApiBadRequestError()
+  @ApiNotFoundError('This staff member has no system access')
+  setAccountStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetAccountStatusDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    // Identity comes from the token, never the body.
+    return this.staffService.setAccountStatus(
+      id,
+      dto.status,
+      user.staffId,
+      branchScopeOf(user),
+    );
+  }
+
+  @Permissions('staff.revokeAccess')
+  @Delete(':id/access')
+  @ApiOperation({
+    summary: 'Take away a staff member’s system access',
+    description:
+      'Deletes their account row and revokes every session. Their role grants ' +
+      'go with it, since roles hang off the account. They stay on the roster ' +
+      'and keep their employment history — they simply cannot sign in.\n\n' +
+      'Also 403s when {id} is your own account: you cannot lock yourself out.',
+  })
+  @StaffIdParam()
+  @ApiOkResponse({
+    type: StaffDeletedDto,
+    description: 'The id of the staff member whose access was revoked.',
+  })
+  @ApiBadRequestError()
+  @ApiNotFoundError('This staff member has no system access')
+  revokeAccess(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    // Identity comes from the token, never the body.
+    return this.staffService.revokeAccess(
+      id,
+      user.staffId,
+      branchScopeOf(user),
+    );
+  }
+
   @Permissions('staff.terminate')
   @Delete(':id')
   @ApiOperation({
     summary: 'Terminate a staff member',
     description:
-      'Soft-deletes the user, marks the profile terminated with today’s date ' +
-      'and revokes every session, so they are signed out at once. The record ' +
-      'is kept so history still resolves.\n\n' +
+      'Soft-deletes the person, marks the staff row terminated with today’s ' +
+      'date and revokes every session, so they are signed out at once. The ' +
+      'record is kept so history still resolves.\n\n' +
       'Also 403s — on top of the missing-permission case — when {id} is your ' +
       'own account: you cannot terminate yourself.',
   })
   @StaffIdParam()
   @ApiOkResponse({
     type: StaffDeletedDto,
-    description: 'Only the id of the terminated user.',
+    description: 'Only the id of the terminated person.',
   })
   @ApiBadRequestError()
   @ApiNotFoundError('Staff member not found')

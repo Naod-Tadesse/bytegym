@@ -2,6 +2,7 @@ import {
   Building03Icon,
   Home09Icon,
   ShieldKeyIcon,
+  ShieldUserIcon,
   UserIcon,
 } from '@hugeicons/core-free-icons';
 
@@ -11,7 +12,8 @@ type IconType = typeof Home09Icon;
  * Full i18n keys, not fragments. `strictKeyChecks` rejects keys built with
  * template literals, so `t(item.titleKey)` needs the whole key up front.
  */
-type NavTitleKey = 'nav.dashboard' | 'nav.staff' | 'nav.roles' | 'nav.branches';
+type NavTitleKey =
+  'nav.dashboard' | 'nav.staff' | 'nav.users' | 'nav.roles' | 'nav.branches';
 
 type NavGroupTitleKey = 'nav.groups.overview' | 'nav.groups.admin';
 
@@ -49,6 +51,14 @@ export const navGroups: NavGroup[] = [
         url: '/staff',
         icon: UserIcon,
         requiredPermission: 'staff.list',
+      },
+      // Users sits beside Roles, not beside Staff: it answers "who can sign
+      // in and as what", which is the access half of the same admin story.
+      {
+        titleKey: 'nav.users',
+        url: '/users',
+        icon: ShieldUserIcon,
+        requiredPermission: 'user.list',
       },
       {
         titleKey: 'nav.roles',

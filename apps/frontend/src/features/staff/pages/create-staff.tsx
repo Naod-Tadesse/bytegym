@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm } from '@tanstack/react-form';
+import { useForm, useStore } from '@tanstack/react-form';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +21,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { createStaffSchema, orUndefined } from '../data/schema';
 import { useDataScopeOptions } from '../hooks/use-data-scope-options';
 import { useGenderOptions } from '../hooks/use-gender-options';
+import { useJobTitleOptions } from '../hooks/use-job-title-options';
 import { useCreateStaff } from '../hooks/use-staff';
 
 export function CreateStaff() {
@@ -36,6 +37,17 @@ export function CreateStaff() {
     hasNextPage: hasMoreBranches,
     isLoading: isLoadingBranches,
   } = useBranchOptions(useDebounce(branchSearch));
+
+  // Job titles are paginated too, and the picked one decides whether this
+  // person can hold a login at all.
+  const [jobTitleSearch, setJobTitleSearch] = useState('');
+  const {
+    options: jobTitleOptions,
+    canHaveAccountById,
+    fetchNextPage: fetchMoreJobTitles,
+    hasNextPage: hasMoreJobTitles,
+    isLoading: isLoadingJobTitles,
+  } = useJobTitleOptions(useDebounce(jobTitleSearch));
 
   const { options: roleOptions, isLoading: isLoadingRoles } = useRoleOptions();
   const genderOptions = useGenderOptions();
@@ -57,16 +69,18 @@ export function CreateStaff() {
       confirmPassword: '',
       dateOfBirth: '',
       gender: '' as '' | 'male' | 'female',
-      staffCode: '',
       // Pre-filled and hidden for a scoped creator — it is the only branch
       // they could pick, and the API would reject anything else.
       primaryBranchId: canChooseBranch ? '' : (currentUser?.branchId ?? ''),
-      jobTitle: '',
+      jobTitleId: '',
       hiredOn: '',
       // A scoped creator can only ever produce branch-scoped staff at their
       // own branch, so both fields are pre-set and hidden below.
       dataScope: 'branch' as 'branch' | 'all',
       roleIds: [] as string[],
+      // Mirrors the picked job title. Never sent — it only decides whether the
+      // credential half of this form exists.
+      canHaveAccount: false,
     },
     validators: { onSubmit: createStaffSchema },
     onSubmit: ({ value }) =>
@@ -74,18 +88,28 @@ export function CreateStaff() {
         firstName: value.firstName.trim(),
         lastName: value.lastName.trim(),
         phone: value.phone.trim(),
-        password: value.password,
+        // Omitted entirely for a title that cannot hold a login: sending one
+        // is a 400, and no account row should be created at all.
+        ...(value.canHaveAccount ? { password: value.password } : {}),
         // The API rejects '' for these, so send nothing instead.
         dateOfBirth: orUndefined(value.dateOfBirth),
         gender: orUndefined(value.gender),
-        staffCode: value.staffCode.trim(),
         primaryBranchId: value.primaryBranchId,
-        jobTitle: value.jobTitle.trim(),
+        jobTitleId: value.jobTitleId,
         hiredOn: value.hiredOn,
         dataScope: value.dataScope,
-        roleIds: value.roleIds,
+        // Roles are held by the account, so without one the API 400s on any
+        // non-empty list — the picker is hidden in that case too.
+        roleIds: value.canHaveAccount ? value.roleIds : [],
       }),
   });
+
+  // Drives which half of the form exists. Read from the store rather than
+  // held alongside it, so there is one answer, not two that can drift.
+  const canHaveAccount = useStore(
+    form.store,
+    (state) => state.values.canHaveAccount,
+  );
 
   return (
     <form
@@ -134,23 +158,55 @@ export function CreateStaff() {
             autoComplete="tel"
             required
           />
-          <FormTextField
+          {/* Chosen before the credentials, because it decides whether there
+              are any: a title with `canHaveAccount: false` is a cleaner — a
+              full employee the API will not hand a login to. */}
+          <FormComboboxField
             form={form}
-            name="password"
-            label={t('staff.fields.password')}
-            type="password"
-            autoComplete="new-password"
+            name="jobTitleId"
+            label={t('staff.fields.jobTitle')}
+            placeholder={t('staff.placeholders.jobTitle')}
+            searchPlaceholder={t('staff.placeholders.searchJobTitle')}
+            options={jobTitleOptions}
+            onValueChange={(value) =>
+              // Read the flag once, at the moment of choosing: a later search
+              // can page this row out of `options` and the answer must hold.
+              form.setFieldValue(
+                'canHaveAccount',
+                canHaveAccountById.get(value) ?? false,
+              )
+            }
+            onSearch={setJobTitleSearch}
+            onScroll={fetchMoreJobTitles}
+            hasNext={hasMoreJobTitles}
+            isLoading={isLoadingJobTitles}
             required
           />
-          {/* Typo guard only — the API never receives this. */}
-          <FormTextField
-            form={form}
-            name="confirmPassword"
-            label={t('staff.fields.confirmPassword')}
-            type="password"
-            autoComplete="new-password"
-            required
-          />
+          {canHaveAccount ? (
+            <>
+              <FormTextField
+                form={form}
+                name="password"
+                label={t('staff.fields.password')}
+                type="password"
+                autoComplete="new-password"
+                required
+              />
+              {/* Typo guard only — the API never receives this. */}
+              <FormTextField
+                form={form}
+                name="confirmPassword"
+                label={t('staff.fields.confirmPassword')}
+                type="password"
+                autoComplete="new-password"
+                required
+              />
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground sm:col-span-2">
+              {t('staff.create.noAccountHint')}
+            </p>
+          )}
           <FormDatePickerField
             form={form}
             name="dateOfBirth"
@@ -165,20 +221,7 @@ export function CreateStaff() {
             placeholder={t('staff.placeholders.gender')}
             options={genderOptions}
           />
-          <FormTextField
-            form={form}
-            name="staffCode"
-            label={t('staff.fields.staffCode')}
-            placeholder="STF-001"
-            required
-          />
-          <FormTextField
-            form={form}
-            name="jobTitle"
-            label={t('staff.fields.jobTitle')}
-            placeholder={t('staff.placeholders.jobTitle')}
-            required
-          />
+          {/* No staff code field — the server assigns it on save. */}
           {canChooseBranch && (
             <>
               <FormComboboxField
@@ -210,15 +253,19 @@ export function CreateStaff() {
             placeholder={t('staff.placeholders.pickDate')}
             required
           />
-          <FormMultiSelectField
-            form={form}
-            name="roleIds"
-            label={t('staff.fields.roles')}
-            placeholder={t('staff.placeholders.roles')}
-            options={roleOptions}
-            disabled={isLoadingRoles}
-            className="sm:col-span-2"
-          />
+          {/* Roles are held by the account. Offering them to someone who will
+              not have one is a guaranteed 400, not a soft warning. */}
+          {canHaveAccount && (
+            <FormMultiSelectField
+              form={form}
+              name="roleIds"
+              label={t('staff.fields.roles')}
+              placeholder={t('staff.placeholders.roles')}
+              options={roleOptions}
+              disabled={isLoadingRoles}
+              className="sm:col-span-2"
+            />
+          )}
         </CardContent>
       </Card>
     </form>

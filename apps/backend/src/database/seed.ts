@@ -4,8 +4,10 @@ import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 
+import { JOB_TITLE_CODES, SEED_JOB_TITLES } from './job-titles.data';
 import { SEED_PERMISSIONS } from './permissions.data';
 import * as schema from './schema';
+import { nextStaffCode } from './staff-code';
 
 /**
  * Standalone seed — plain pg + Drizzle, deliberately not a Nest context so it
@@ -24,6 +26,7 @@ const ADMIN = {
 const OWNER_ROLE = 'Owner';
 const MAIN_BRANCH = 'Main Branch';
 const BCRYPT_ROUNDS = 10;
+
 
 async function main() {
   const url = process.env['DATABASE_URL'];
@@ -91,63 +94,101 @@ async function main() {
       .onConflictDoNothing();
     console.log(`${OWNER_ROLE} linked to ${allPermissions.length} permissions`);
 
-    // ---- 5. admin user -------------------------------------------------
-    let [adminUser] = await db
+    // ---- 5. job titles ---------------------------------------------------
+    // Same shape as permissions: a code catalogue, applied idempotently.
+    await db
+      .insert(schema.jobTitles)
+      .values(SEED_JOB_TITLES)
+      .onConflictDoNothing({ target: schema.jobTitles.code });
+    const allJobTitles = await db.select().from(schema.jobTitles);
+    // Looked up by CODE, not by name — the name is a label that may change.
+    const ownerTitle = allJobTitles.find(
+      (row) => row.code === JOB_TITLE_CODES.OWNER,
+    );
+    if (!ownerTitle) {
+      throw new Error(
+        `job title "${JOB_TITLE_CODES.OWNER}" missing after seed`,
+      );
+    }
+    console.log(`job titles: ${allJobTitles.length}`);
+
+    // ---- 6. admin person -----------------------------------------------
+    let [adminPerson] = await db
       .select()
-      .from(schema.users)
-      .where(eq(schema.users.phone, ADMIN.phone));
-    if (!adminUser) {
-      const passwordHash = await bcrypt.hash(ADMIN.password, BCRYPT_ROUNDS);
-      [adminUser] = await db
-        .insert(schema.users)
+      .from(schema.person)
+      .where(eq(schema.person.phone, ADMIN.phone));
+    if (!adminPerson) {
+      [adminPerson] = await db
+        .insert(schema.person)
         .values({
           firstName: ADMIN.firstName,
           lastName: ADMIN.lastName,
           phone: ADMIN.phone,
-          passwordHash,
-          status: 'active',
         })
         .returning();
-      console.log(`admin user created: ${ADMIN.phone}`);
+      console.log(`admin person created: ${ADMIN.phone}`);
     } else {
-      console.log(`admin user exists: ${ADMIN.phone}`);
+      console.log(`admin person exists: ${ADMIN.phone}`);
     }
 
-    // ---- 6. staff profile ----------------------------------------------
+    // ---- 7. admin account ------------------------------------------------
+    // The credential is a separate row now: this is what makes the admin able
+    // to sign in at all.
+    let [adminAccount] = await db
+      .select()
+      .from(schema.accounts)
+      .where(eq(schema.accounts.personId, adminPerson.id));
+    if (!adminAccount) {
+      [adminAccount] = await db
+        .insert(schema.accounts)
+        .values({
+          personId: adminPerson.id,
+          passwordHash: await bcrypt.hash(ADMIN.password, BCRYPT_ROUNDS),
+        })
+        .returning();
+      console.log('admin account created');
+    } else {
+      console.log('admin account exists');
+    }
+
+    // ---- 8. staff row --------------------------------------------------
     let [adminStaff] = await db
       .select()
-      .from(schema.staffProfiles)
-      .where(eq(schema.staffProfiles.userId, adminUser.id));
+      .from(schema.staff)
+      .where(eq(schema.staff.personId, adminPerson.id));
     if (!adminStaff) {
       [adminStaff] = await db
-        .insert(schema.staffProfiles)
+        .insert(schema.staff)
         .values({
-          userId: adminUser.id,
-          staffCode: 'STF-000001',
+          personId: adminPerson.id,
+          // Same generator the API uses, so there is only ever one format.
+          staffCode: await nextStaffCode(db),
           primaryBranchId: branch.id,
           dataScope: 'all',
-          jobTitle: 'Owner',
+          jobTitleId: ownerTitle.id,
           hiredOn: new Date().toISOString().slice(0, 10),
         })
         .returning();
-      console.log('admin staff profile created');
+      console.log('admin staff row created');
     } else if (adminStaff.dataScope !== 'all') {
       // Repairs an existing database: the data_scope column defaults to
       // 'branch', which would otherwise lock the owner out of branch admin.
       [adminStaff] = await db
-        .update(schema.staffProfiles)
+        .update(schema.staff)
         .set({ dataScope: 'all' })
-        .where(eq(schema.staffProfiles.userId, adminUser.id))
+        .where(eq(schema.staff.personId, adminPerson.id))
         .returning();
-      console.log('admin staff profile updated: dataScope -> all');
+      console.log('admin staff row updated: dataScope -> all');
     } else {
-      console.log('admin staff profile exists');
+      console.log('admin staff row exists');
     }
 
-    // ---- 7. role assignment --------------------------------------------
+    // ---- 9. role assignment --------------------------------------------
+    // Grants hang off the account, not the staff row — only someone who can
+    // sign in can hold a role.
     await db
-      .insert(schema.userRoles)
-      .values({ staffId: adminStaff.userId, roleId: ownerRole.id })
+      .insert(schema.accountRoles)
+      .values({ accountId: adminAccount.id, roleId: ownerRole.id })
       .onConflictDoNothing();
     console.log(`admin granted ${OWNER_ROLE}`);
 

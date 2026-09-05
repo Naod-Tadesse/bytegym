@@ -4,7 +4,7 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   phone: string;
-  status: 'active' | 'suspended' | 'deactivated';
+  status: 'active' | 'disabled';
   staffCode: string;
   jobTitle: string;
   employmentStatus: 'active' | 'on_leave' | 'terminated';

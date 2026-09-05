@@ -114,6 +114,24 @@ export function useStaffColumns({
                 </div>
               ),
           }),
+          columnHelper.accessor('hasAccount', {
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('staff.columns.access')}
+              />
+            ),
+            // Stated either way, never left blank: no login is a deliberate
+            // fact about a cleaner, not missing data.
+            cell: ({ row }) =>
+              row.original.hasAccount ? (
+                <Badge variant="secondary">{t('staff.access.has')}</Badge>
+              ) : (
+                <Badge variant="outline" className="text-muted-foreground">
+                  {t('staff.access.none')}
+                </Badge>
+              ),
+          }),
           columnHelper.accessor('employmentStatus', {
             header: ({ column }) => (
               <DataTableColumnHeader

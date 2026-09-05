@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import {
   FormComboboxField,
   FormDatePickerField,
-  FormMultiSelectField,
   FormSelectField,
   FormTextField,
 } from '@/components/form-fields';
@@ -17,13 +16,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { useCurrentUser } from '@/features/auth/hooks/use-auth';
 import { useBranchOptions } from '@/features/branches/hooks/use-branches';
-import { useRoleOptions } from '@/features/roles/hooks/use-roles';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useEmploymentStatusOptions } from '../components/employment-status-badge';
 import { editStaffSchema, orUndefined } from '../data/schema';
 import type { StaffDetail } from '../data/types';
-import { useDataScopeOptions } from '../hooks/use-data-scope-options';
 import { useGenderOptions } from '../hooks/use-gender-options';
+import { useJobTitleOptions } from '../hooks/use-job-title-options';
 import { useStaffMember, useUpdateStaff } from '../hooks/use-staff';
 
 /** Outer half resolves the record; the inner half only renders with it. */
@@ -49,20 +47,27 @@ function EditStaffForm({ staffMember }: { staffMember: StaffDetail }) {
     isLoading: isLoadingBranches,
   } = useBranchOptions(useDebounce(branchSearch));
 
-  const { options: roleOptions, isLoading: isLoadingRoles } = useRoleOptions();
+  // Job titles are paginated too, so the same server-side picker.
+  const [jobTitleSearch, setJobTitleSearch] = useState('');
+  const {
+    options: jobTitleOptions,
+    fetchNextPage: fetchMoreJobTitles,
+    hasNextPage: hasMoreJobTitles,
+    isLoading: isLoadingJobTitles,
+  } = useJobTitleOptions(useDebounce(jobTitleSearch));
+
   const genderOptions = useGenderOptions();
   const statusOptions = useEmploymentStatusOptions();
-  const dataScopeOptions = useDataScopeOptions();
 
-  // Same rule as create: a scoped editor cannot move someone to another branch
-  // or promote them to all-branch access, so neither control is offered.
+  // Same rule as create: a scoped editor cannot move someone to another
+  // branch, so the control is not offered.
   const { data: currentUser } = useCurrentUser();
   const canChooseBranch = currentUser?.dataScope === 'all';
 
   const goToDetail = () =>
     navigate({
       to: '/staff/$staffId',
-      params: { staffId: staffMember.userId },
+      params: { staffId: staffMember.personId },
     });
 
   const form = useForm({
@@ -72,27 +77,24 @@ function EditStaffForm({ staffMember }: { staffMember: StaffDetail }) {
       dateOfBirth: staffMember.dateOfBirth ?? '',
       gender: (staffMember.gender ?? '') as '' | 'male' | 'female',
       primaryBranchId: staffMember.branchId,
-      jobTitle: staffMember.jobTitle,
+      jobTitleId: staffMember.jobTitleId,
       employmentStatus: staffMember.employmentStatus,
-      dataScope: staffMember.dataScope,
-      roleIds: staffMember.roles.map((role) => role.id),
     },
     validators: { onSubmit: editStaffSchema },
     onSubmit: ({ value }) =>
       updateStaff({
-        staffId: staffMember.userId,
+        staffId: staffMember.personId,
         data: {
           firstName: value.firstName.trim(),
           lastName: value.lastName.trim(),
           dateOfBirth: orUndefined(value.dateOfBirth),
           gender: orUndefined(value.gender),
           primaryBranchId: value.primaryBranchId,
-          jobTitle: value.jobTitle.trim(),
+          jobTitleId: value.jobTitleId,
           employmentStatus: value.employmentStatus,
-          // Omitted entirely by a scoped editor, so the API never sees an
-          // unchanged value it would reject.
-          ...(canChooseBranch ? { dataScope: value.dataScope } : {}),
-          roleIds: value.roleIds,
+          // No `dataScope` and no `roleIds`: both are access decisions, made
+          // on the users screen. Sending either from here would silently
+          // reissue someone's permissions from an HR form.
         },
       }),
   });
@@ -149,42 +151,47 @@ function EditStaffForm({ staffMember }: { staffMember: StaffDetail }) {
             placeholder={t('staff.placeholders.gender')}
             options={genderOptions}
           />
-          <FormTextField
+          <FormComboboxField
             form={form}
-            name="jobTitle"
+            name="jobTitleId"
             label={t('staff.fields.jobTitle')}
+            placeholder={t('staff.placeholders.jobTitle')}
+            searchPlaceholder={t('staff.placeholders.searchJobTitle')}
+            options={jobTitleOptions}
+            // The saved title may sit on a page that was never loaded, or be
+            // filtered out by a search — without this the trigger renders
+            // empty and the field looks unset.
+            selectedOption={{
+              value: staffMember.jobTitleId,
+              label: staffMember.jobTitle,
+            }}
+            onSearch={setJobTitleSearch}
+            onScroll={fetchMoreJobTitles}
+            hasNext={hasMoreJobTitles}
+            isLoading={isLoadingJobTitles}
             required
           />
           {canChooseBranch && (
-            <>
-              <FormComboboxField
-                form={form}
-                name="primaryBranchId"
-                label={t('staff.fields.branch')}
-                placeholder={t('staff.placeholders.branch')}
-                searchPlaceholder={t('staff.placeholders.searchBranch')}
-                options={branchOptions}
-                // The saved branch may sit on a page that was never loaded, or
-                // be filtered out by a search — without this the trigger
-                // renders empty.
-                selectedOption={{
-                  value: staffMember.branchId,
-                  label: staffMember.branchName,
-                }}
-                onSearch={setBranchSearch}
-                onScroll={fetchMoreBranches}
-                hasNext={hasMoreBranches}
-                isLoading={isLoadingBranches}
-                required
-              />
-              <FormSelectField
-                form={form}
-                name="dataScope"
-                label={t('staff.fields.dataScope')}
-                options={dataScopeOptions}
-                required
-              />
-            </>
+            <FormComboboxField
+              form={form}
+              name="primaryBranchId"
+              label={t('staff.fields.branch')}
+              placeholder={t('staff.placeholders.branch')}
+              searchPlaceholder={t('staff.placeholders.searchBranch')}
+              options={branchOptions}
+              // The saved branch may sit on a page that was never loaded, or
+              // be filtered out by a search — without this the trigger
+              // renders empty.
+              selectedOption={{
+                value: staffMember.branchId,
+                label: staffMember.branchName,
+              }}
+              onSearch={setBranchSearch}
+              onScroll={fetchMoreBranches}
+              hasNext={hasMoreBranches}
+              isLoading={isLoadingBranches}
+              required
+            />
           )}
           <FormSelectField
             form={form}
@@ -193,15 +200,12 @@ function EditStaffForm({ staffMember }: { staffMember: StaffDetail }) {
             options={statusOptions}
             required
           />
-          <FormMultiSelectField
-            form={form}
-            name="roleIds"
-            label={t('staff.fields.roles')}
-            placeholder={t('staff.placeholders.roles')}
-            options={roleOptions}
-            disabled={isLoadingRoles}
-            className="sm:col-span-2"
-          />
+          {/* Roles and data scope are not here on purpose: they decide what
+              this person may reach, not what they do for a living. Both are
+              edited from the users screen. */}
+          <p className="text-sm text-muted-foreground sm:col-span-2">
+            {t('staff.edit.accessHint')}
+          </p>
         </CardContent>
       </Card>
     </form>

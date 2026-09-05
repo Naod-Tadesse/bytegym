@@ -16,6 +16,7 @@ import { Route as BranchesNewRouteImport } from './routes/branches/new'
 import { Route as RolesIndexRouteImport } from './routes/roles/index'
 import { Route as StaffIndexRouteImport } from './routes/staff/index'
 import { Route as StaffNewRouteImport } from './routes/staff/new'
+import { Route as UsersIndexRouteImport } from './routes/users/index'
 import { Route as BranchesBranchIdEditRouteImport } from './routes/branches/$branchId.edit'
 import { Route as RolesRoleIdPermissionsRouteImport } from './routes/roles/$roleId.permissions'
 import { Route as StaffStaffIdIndexRouteImport } from './routes/staff/$staffId.index'
@@ -56,6 +57,11 @@ const StaffNewRoute = StaffNewRouteImport.update({
   path: '/staff/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UsersIndexRoute = UsersIndexRouteImport.update({
+  id: '/users/',
+  path: '/users/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BranchesBranchIdEditRoute = BranchesBranchIdEditRouteImport.update({
   id: '/branches/$branchId/edit',
   path: '/branches/$branchId/edit',
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/branches/': typeof BranchesIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/staff/': typeof StaffIndexRoute
+  '/users/': typeof UsersIndexRoute
   '/branches/$branchId/edit': typeof BranchesBranchIdEditRoute
   '/roles/$roleId/permissions': typeof RolesRoleIdPermissionsRoute
   '/staff/$staffId/edit': typeof StaffStaffIdEditRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/branches': typeof BranchesIndexRoute
   '/roles': typeof RolesIndexRoute
   '/staff': typeof StaffIndexRoute
+  '/users': typeof UsersIndexRoute
   '/branches/$branchId/edit': typeof BranchesBranchIdEditRoute
   '/roles/$roleId/permissions': typeof RolesRoleIdPermissionsRoute
   '/staff/$staffId/edit': typeof StaffStaffIdEditRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/branches/': typeof BranchesIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/staff/': typeof StaffIndexRoute
+  '/users/': typeof UsersIndexRoute
   '/branches/$branchId/edit': typeof BranchesBranchIdEditRoute
   '/roles/$roleId/permissions': typeof RolesRoleIdPermissionsRoute
   '/staff/$staffId/edit': typeof StaffStaffIdEditRoute
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/branches/'
     | '/roles/'
     | '/staff/'
+    | '/users/'
     | '/branches/$branchId/edit'
     | '/roles/$roleId/permissions'
     | '/staff/$staffId/edit'
@@ -140,6 +150,7 @@ export interface FileRouteTypes {
     | '/branches'
     | '/roles'
     | '/staff'
+    | '/users'
     | '/branches/$branchId/edit'
     | '/roles/$roleId/permissions'
     | '/staff/$staffId/edit'
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/branches/'
     | '/roles/'
     | '/staff/'
+    | '/users/'
     | '/branches/$branchId/edit'
     | '/roles/$roleId/permissions'
     | '/staff/$staffId/edit'
@@ -167,6 +179,7 @@ export interface RootRouteChildren {
   BranchesIndexRoute: typeof BranchesIndexRoute
   RolesIndexRoute: typeof RolesIndexRoute
   StaffIndexRoute: typeof StaffIndexRoute
+  UsersIndexRoute: typeof UsersIndexRoute
   BranchesBranchIdEditRoute: typeof BranchesBranchIdEditRoute
   RolesRoleIdPermissionsRoute: typeof RolesRoleIdPermissionsRoute
   StaffStaffIdEditRoute: typeof StaffStaffIdEditRoute
@@ -224,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StaffNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/users/': {
+      id: '/users/'
+      path: '/users'
+      fullPath: '/users/'
+      preLoaderRoute: typeof UsersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/branches/$branchId/edit': {
       id: '/branches/$branchId/edit'
       path: '/branches/$branchId/edit'
@@ -263,6 +283,7 @@ const rootRouteChildren: RootRouteChildren = {
   BranchesIndexRoute: BranchesIndexRoute,
   RolesIndexRoute: RolesIndexRoute,
   StaffIndexRoute: StaffIndexRoute,
+  UsersIndexRoute: UsersIndexRoute,
   BranchesBranchIdEditRoute: BranchesBranchIdEditRoute,
   RolesRoleIdPermissionsRoute: RolesRoleIdPermissionsRoute,
   StaffStaffIdEditRoute: StaffStaffIdEditRoute,

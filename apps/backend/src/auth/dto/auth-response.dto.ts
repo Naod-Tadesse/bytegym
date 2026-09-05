@@ -5,11 +5,11 @@ import {
   DATA_SCOPES,
   EMPLOYMENT_STATUS_ENUM_NAME,
   EMPLOYMENT_STATUSES,
-  USER_STATUS_ENUM_NAME,
-  USER_STATUSES,
+  ACCOUNT_STATUS_ENUM_NAME,
+  ACCOUNT_STATUSES,
   type DataScope,
   type EmploymentStatus,
-  type UserStatus,
+  type AccountStatus,
 } from '../../common/enums';
 
 export class TokenPairDto {
@@ -42,8 +42,11 @@ export class CurrentUserDto {
   @ApiProperty({ type: String, example: '0911000000' })
   phone!: string;
 
-  @ApiProperty({ enum: [...USER_STATUSES], enumName: USER_STATUS_ENUM_NAME })
-  status!: UserStatus;
+  @ApiProperty({
+    enum: [...ACCOUNT_STATUSES],
+    enumName: ACCOUNT_STATUS_ENUM_NAME,
+  })
+  status!: AccountStatus;
 
   @ApiProperty({ type: String, example: 'STF-000001' })
   staffCode!: string;

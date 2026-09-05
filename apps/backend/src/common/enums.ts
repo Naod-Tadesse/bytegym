@@ -1,8 +1,8 @@
 import {
+  accountStatus,
   dataScope,
   employmentStatus,
   genderType,
-  userStatus,
 } from '../database/schema';
 
 /**
@@ -15,16 +15,16 @@ import {
  * for what is one concept.
  */
 export const GENDERS = genderType.enumValues;
-export const USER_STATUSES = userStatus.enumValues;
+export const ACCOUNT_STATUSES = accountStatus.enumValues;
 export const EMPLOYMENT_STATUSES = employmentStatus.enumValues;
 export const DATA_SCOPES = dataScope.enumValues;
 
 export const GENDER_ENUM_NAME = 'Gender';
-export const USER_STATUS_ENUM_NAME = 'UserStatus';
+export const ACCOUNT_STATUS_ENUM_NAME = 'AccountStatus';
 export const EMPLOYMENT_STATUS_ENUM_NAME = 'EmploymentStatus';
 export const DATA_SCOPE_ENUM_NAME = 'DataScope';
 
 export type Gender = (typeof GENDERS)[number];
-export type UserStatus = (typeof USER_STATUSES)[number];
+export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
 export type EmploymentStatus = (typeof EMPLOYMENT_STATUSES)[number];
 export type DataScope = (typeof DATA_SCOPES)[number];

@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
   date,
   pgEnum,
+  pgSequence,
   pgTable,
   timestamp,
   uniqueIndex,
@@ -10,7 +11,8 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { branches } from './branches';
-import { users } from './users';
+import { jobTitles } from './job-titles';
+import { person } from './person';
 
 export const employmentStatus = pgEnum('employment_status', [
   'active',
@@ -31,23 +33,38 @@ export const employmentStatus = pgEnum('employment_status', [
 export const dataScope = pgEnum('data_scope', ['branch', 'all']);
 
 /**
- * The existence of this row is what makes someone staff. Terminated staff keep
- * the row so history survives — firing someone must not touch users.status.
+ * Feeds the generated staff code. A sequence rather than `max(...) + 1`
+ * because nextval is atomic — two concurrent hires cannot draw the same
+ * number, so there is no race to retry and no unique-violation to translate.
+ *
+ * Gaps are expected and fine: a rolled-back transaction consumes a number.
+ * The code identifies a person, it does not count them.
  */
-export const staffProfiles = pgTable(
-  'staff_profiles',
+export const staffCodeSeq = pgSequence('staff_code_seq', { startWith: 1 });
+
+/**
+ * The existence of this row is what makes someone staff. Terminated staff keep
+ * the row so history survives — firing someone must not touch person.status.
+ */
+export const staff = pgTable(
+  'staff',
   {
-    userId: uuid('user_id')
+    personId: uuid('person_id')
       .primaryKey()
-      .references(() => users.id),
+      .references(() => person.id),
     staffCode: varchar('staff_code', { length: 24 }).notNull(),
     /** Where they are based. Still required, even at `all` scope. */
     primaryBranchId: uuid('primary_branch_id')
       .notNull()
       .references(() => branches.id),
     dataScope: dataScope('data_scope').notNull().default('branch'),
-    /** Display label only — permissions come from roles. */
-    jobTitle: varchar('job_title', { length: 80 }).notNull(),
+    /**
+     * What they do. Permissions still come from roles — this only decides
+     * whether they may hold an account at all, via jobTitles.canHaveAccount.
+     */
+    jobTitleId: uuid('job_title_id')
+      .notNull()
+      .references(() => jobTitles.id),
     employmentStatus: employmentStatus('employment_status')
       .notNull()
       .default('active'),
@@ -62,12 +79,12 @@ export const staffProfiles = pgTable(
       .$onUpdate(() => new Date()),
   },
   (table) => [
-    uniqueIndex('staff_profiles_code_uniq').on(table.staffCode),
-    uniqueIndex('staff_profiles_active_branch_idx')
-      .on(table.primaryBranchId, table.userId)
+    uniqueIndex('staff_code_uniq').on(table.staffCode),
+    uniqueIndex('staff_active_branch_idx')
+      .on(table.primaryBranchId, table.personId)
       .where(sql`${table.terminatedOn} is null`),
   ],
 );
 
-export type StaffProfile = typeof staffProfiles.$inferSelect;
-export type NewStaffProfile = typeof staffProfiles.$inferInsert;
+export type Staff = typeof staff.$inferSelect;
+export type NewStaff = typeof staff.$inferInsert;

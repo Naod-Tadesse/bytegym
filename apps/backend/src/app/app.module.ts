@@ -8,6 +8,7 @@ import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { BranchesModule } from '../branches/branches.module';
 import { DatabaseModule } from '../database/database.module';
 import { HealthModule } from '../health/health.module';
+import { JobTitlesModule } from '../job-titles/job-titles.module';
 import { RolesModule } from '../roles/roles.module';
 import { StaffModule } from '../staff/staff.module';
 import { AppController } from './app.controller';
@@ -23,6 +24,7 @@ import { AppService } from './app.service';
     AuthModule,
     HealthModule,
     BranchesModule,
+    JobTitlesModule,
     RolesModule,
     StaffModule,
   ],

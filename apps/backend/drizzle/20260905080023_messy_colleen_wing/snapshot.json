@@ -1,9 +1,9 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "3a5c66eb-6fb1-41d8-888c-29ce2dca2e65",
+  "id": "f583be8c-8f07-49c9-9671-8c8e28b2ce59",
   "prevIds": [
-    "3cfc0d89-2234-4c2d-8df0-ae69886a63f8"
+    "00000000-0000-0000-0000-000000000000"
   ],
   "ddl": [
     {
@@ -18,10 +18,9 @@
     {
       "values": [
         "active",
-        "suspended",
-        "deactivated"
+        "disabled"
       ],
-      "name": "user_status",
+      "name": "account_status",
       "entityType": "enums",
       "schema": "public"
     },
@@ -45,6 +44,24 @@
       "schema": "public"
     },
     {
+      "values": [
+        "staff",
+        "member"
+      ],
+      "name": "session_audience",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
+      "values": [
+        "login_otp",
+        "phone_change"
+      ],
+      "name": "verification_purpose",
+      "entityType": "enums",
+      "schema": "public"
+    },
+    {
       "isRlsEnabled": false,
       "name": "branches",
       "entityType": "tables",
@@ -52,13 +69,25 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "users",
+      "name": "person",
       "entityType": "tables",
       "schema": "public"
     },
     {
       "isRlsEnabled": false,
-      "name": "staff_profiles",
+      "name": "accounts",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "job_titles",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "staff",
       "entityType": "tables",
       "schema": "public"
     },
@@ -82,13 +111,19 @@
     },
     {
       "isRlsEnabled": false,
-      "name": "user_roles",
+      "name": "account_roles",
       "entityType": "tables",
       "schema": "public"
     },
     {
       "isRlsEnabled": false,
       "name": "sessions",
+      "entityType": "tables",
+      "schema": "public"
+    },
+    {
+      "isRlsEnabled": false,
+      "name": "verification",
       "entityType": "tables",
       "schema": "public"
     },
@@ -207,7 +242,7 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "users"
+      "table": "person"
     },
     {
       "type": "varchar(80)",
@@ -220,7 +255,7 @@
       "name": "first_name",
       "entityType": "columns",
       "schema": "public",
-      "table": "users"
+      "table": "person"
     },
     {
       "type": "varchar(80)",
@@ -233,7 +268,7 @@
       "name": "last_name",
       "entityType": "columns",
       "schema": "public",
-      "table": "users"
+      "table": "person"
     },
     {
       "type": "varchar(30)",
@@ -246,20 +281,7 @@
       "name": "phone",
       "entityType": "columns",
       "schema": "public",
-      "table": "users"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "password_hash",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "users"
+      "table": "person"
     },
     {
       "type": "date",
@@ -272,7 +294,7 @@
       "name": "date_of_birth",
       "entityType": "columns",
       "schema": "public",
-      "table": "users"
+      "table": "person"
     },
     {
       "type": "gender_type",
@@ -285,33 +307,7 @@
       "name": "gender",
       "entityType": "columns",
       "schema": "public",
-      "table": "users"
-    },
-    {
-      "type": "user_status",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'active'",
-      "generated": null,
-      "identity": null,
-      "name": "status",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "users"
-    },
-    {
-      "type": "timestamp with time zone",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "last_login_at",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "users"
+      "table": "person"
     },
     {
       "type": "uuid",
@@ -321,10 +317,10 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "registered_by_user_id",
+      "name": "registered_by_person_id",
       "entityType": "columns",
       "schema": "public",
-      "table": "users"
+      "table": "person"
     },
     {
       "type": "timestamp with time zone",
@@ -337,7 +333,7 @@
       "name": "created_at",
       "entityType": "columns",
       "schema": "public",
-      "table": "users"
+      "table": "person"
     },
     {
       "type": "timestamp with time zone",
@@ -350,7 +346,7 @@
       "name": "updated_at",
       "entityType": "columns",
       "schema": "public",
-      "table": "users"
+      "table": "person"
     },
     {
       "type": "timestamp with time zone",
@@ -363,7 +359,20 @@
       "name": "deleted_at",
       "entityType": "columns",
       "schema": "public",
-      "table": "users"
+      "table": "person"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "accounts"
     },
     {
       "type": "uuid",
@@ -373,101 +382,49 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "user_id",
+      "name": "person_id",
       "entityType": "columns",
       "schema": "public",
-      "table": "staff_profiles"
+      "table": "accounts"
     },
     {
-      "type": "varchar(24)",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "staff_code",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "staff_profiles"
-    },
-    {
-      "type": "uuid",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "primary_branch_id",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "staff_profiles"
-    },
-    {
-      "type": "data_scope",
-      "typeSchema": "public",
-      "notNull": true,
-      "dimensions": 0,
-      "default": "'branch'",
-      "generated": null,
-      "identity": null,
-      "name": "data_scope",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "staff_profiles"
-    },
-    {
-      "type": "varchar(80)",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "job_title",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "staff_profiles"
-    },
-    {
-      "type": "employment_status",
+      "type": "account_status",
       "typeSchema": "public",
       "notNull": true,
       "dimensions": 0,
       "default": "'active'",
       "generated": null,
       "identity": null,
-      "name": "employment_status",
+      "name": "status",
       "entityType": "columns",
       "schema": "public",
-      "table": "staff_profiles"
+      "table": "accounts"
     },
     {
-      "type": "date",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "hired_on",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "staff_profiles"
-    },
-    {
-      "type": "date",
+      "type": "text",
       "typeSchema": null,
       "notNull": false,
       "dimensions": 0,
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "terminated_on",
+      "name": "password_hash",
       "entityType": "columns",
       "schema": "public",
-      "table": "staff_profiles"
+      "table": "accounts"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "last_login_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "accounts"
     },
     {
       "type": "timestamp with time zone",
@@ -480,7 +437,7 @@
       "name": "created_at",
       "entityType": "columns",
       "schema": "public",
-      "table": "staff_profiles"
+      "table": "accounts"
     },
     {
       "type": "timestamp with time zone",
@@ -493,7 +450,228 @@
       "name": "updated_at",
       "entityType": "columns",
       "schema": "public",
-      "table": "staff_profiles"
+      "table": "accounts"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "job_titles"
+    },
+    {
+      "type": "varchar(40)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "code",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "job_titles"
+    },
+    {
+      "type": "varchar(80)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "name",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "job_titles"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "false",
+      "generated": null,
+      "identity": null,
+      "name": "can_have_account",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "job_titles"
+    },
+    {
+      "type": "boolean",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "true",
+      "generated": null,
+      "identity": null,
+      "name": "is_active",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "job_titles"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "job_titles"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "job_titles"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "person_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "staff"
+    },
+    {
+      "type": "varchar(24)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "staff_code",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "staff"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "primary_branch_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "staff"
+    },
+    {
+      "type": "data_scope",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'branch'",
+      "generated": null,
+      "identity": null,
+      "name": "data_scope",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "staff"
+    },
+    {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "job_title_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "staff"
+    },
+    {
+      "type": "employment_status",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'active'",
+      "generated": null,
+      "identity": null,
+      "name": "employment_status",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "staff"
+    },
+    {
+      "type": "date",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "hired_on",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "staff"
+    },
+    {
+      "type": "date",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "terminated_on",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "staff"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "staff"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "staff"
     },
     {
       "type": "uuid",
@@ -701,7 +879,7 @@
       "name": "id",
       "entityType": "columns",
       "schema": "public",
-      "table": "user_roles"
+      "table": "account_roles"
     },
     {
       "type": "uuid",
@@ -711,10 +889,10 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "staff_id",
+      "name": "account_id",
       "entityType": "columns",
       "schema": "public",
-      "table": "user_roles"
+      "table": "account_roles"
     },
     {
       "type": "uuid",
@@ -727,7 +905,7 @@
       "name": "role_id",
       "entityType": "columns",
       "schema": "public",
-      "table": "user_roles"
+      "table": "account_roles"
     },
     {
       "type": "timestamp with time zone",
@@ -740,7 +918,7 @@
       "name": "created_at",
       "entityType": "columns",
       "schema": "public",
-      "table": "user_roles"
+      "table": "account_roles"
     },
     {
       "type": "uuid",
@@ -763,7 +941,46 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "user_id",
+      "name": "person_id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "sessions"
+    },
+    {
+      "type": "session_audience",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": "'staff'",
+      "generated": null,
+      "identity": null,
+      "name": "audience",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "sessions"
+    },
+    {
+      "type": "char(64)",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "access_token_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "sessions"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "access_token_expires_at",
       "entityType": "columns",
       "schema": "public",
       "table": "sessions"
@@ -789,7 +1006,7 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "expires_at",
+      "name": "refresh_token_expires_at",
       "entityType": "columns",
       "schema": "public",
       "table": "sessions"
@@ -821,6 +1038,110 @@
       "table": "sessions"
     },
     {
+      "type": "uuid",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "gen_random_uuid()",
+      "generated": null,
+      "identity": null,
+      "name": "id",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "verification"
+    },
+    {
+      "type": "varchar(30)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "identifier",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "verification"
+    },
+    {
+      "type": "verification_purpose",
+      "typeSchema": "public",
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "purpose",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "verification"
+    },
+    {
+      "type": "char(64)",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "code_hash",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "verification"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "expires_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "verification"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": false,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "name": "consumed_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "verification"
+    },
+    {
+      "type": "integer",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "0",
+      "generated": null,
+      "identity": null,
+      "name": "attempts",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "verification"
+    },
+    {
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "schema": "public",
+      "table": "verification"
+    },
+    {
       "nameExplicit": true,
       "columns": [
         {
@@ -836,31 +1157,10 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "users_phone_active_uniq",
+      "name": "person_phone_active_uniq",
       "entityType": "indexes",
       "schema": "public",
-      "table": "users"
-    },
-    {
-      "nameExplicit": true,
-      "columns": [
-        {
-          "value": "status",
-          "isExpression": false,
-          "asc": true,
-          "nullsFirst": false,
-          "opclass": null
-        }
-      ],
-      "isUnique": false,
-      "where": null,
-      "with": "",
-      "method": "btree",
-      "concurrently": false,
-      "name": "users_status_idx",
-      "entityType": "indexes",
-      "schema": "public",
-      "table": "users"
+      "table": "person"
     },
     {
       "nameExplicit": true,
@@ -878,10 +1178,10 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "staff_profiles_code_uniq",
+      "name": "staff_code_uniq",
       "entityType": "indexes",
       "schema": "public",
-      "table": "staff_profiles"
+      "table": "staff"
     },
     {
       "nameExplicit": true,
@@ -894,7 +1194,7 @@
           "opclass": null
         },
         {
-          "value": "user_id",
+          "value": "person_id",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -906,10 +1206,10 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "staff_profiles_active_branch_idx",
+      "name": "staff_active_branch_idx",
       "entityType": "indexes",
       "schema": "public",
-      "table": "staff_profiles"
+      "table": "staff"
     },
     {
       "nameExplicit": true,
@@ -936,7 +1236,7 @@
       "nameExplicit": true,
       "columns": [
         {
-          "value": "staff_id",
+          "value": "account_id",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -955,16 +1255,16 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "user_roles_staff_role_uniq",
+      "name": "account_roles_account_role_uniq",
       "entityType": "indexes",
       "schema": "public",
-      "table": "user_roles"
+      "table": "account_roles"
     },
     {
       "nameExplicit": true,
       "columns": [
         {
-          "value": "user_id",
+          "value": "person_id",
           "isExpression": false,
           "asc": true,
           "nullsFirst": false,
@@ -983,27 +1283,128 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "sessions_user_revoked_idx",
+      "name": "sessions_person_revoked_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "sessions"
     },
     {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "person_id",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "audience",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "revoked_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "sessions_person_audience_revoked_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "sessions"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "identifier",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        },
+        {
+          "value": "purpose",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "verification_identifier_purpose_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "verification"
+    },
+    {
+      "nameExplicit": true,
+      "columns": [
+        {
+          "value": "expires_at",
+          "isExpression": false,
+          "asc": true,
+          "nullsFirst": false,
+          "opclass": null
+        }
+      ],
+      "isUnique": false,
+      "where": null,
+      "with": "",
+      "method": "btree",
+      "concurrently": false,
+      "name": "verification_expires_idx",
+      "entityType": "indexes",
+      "schema": "public",
+      "table": "verification"
+    },
+    {
       "nameExplicit": false,
       "columns": [
-        "user_id"
+        "person_id"
       ],
       "schemaTo": "public",
-      "tableTo": "users",
+      "tableTo": "person",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "CASCADE",
+      "name": "accounts_person_id_person_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "accounts"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "person_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "person",
       "columnsTo": [
         "id"
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
-      "name": "staff_profiles_user_id_users_id_fkey",
+      "name": "staff_person_id_person_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "staff_profiles"
+      "table": "staff"
     },
     {
       "nameExplicit": false,
@@ -1017,10 +1418,27 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
-      "name": "staff_profiles_primary_branch_id_branches_id_fkey",
+      "name": "staff_primary_branch_id_branches_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "staff_profiles"
+      "table": "staff"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "job_title_id"
+      ],
+      "schemaTo": "public",
+      "tableTo": "job_titles",
+      "columnsTo": [
+        "id"
+      ],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "name": "staff_job_title_id_job_titles_id_fkey",
+      "entityType": "fks",
+      "schema": "public",
+      "table": "staff"
     },
     {
       "nameExplicit": false,
@@ -1059,19 +1477,19 @@
     {
       "nameExplicit": false,
       "columns": [
-        "staff_id"
+        "account_id"
       ],
       "schemaTo": "public",
-      "tableTo": "staff_profiles",
+      "tableTo": "accounts",
       "columnsTo": [
-        "user_id"
+        "id"
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "name": "user_roles_staff_id_staff_profiles_user_id_fkey",
+      "name": "account_roles_account_id_accounts_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "user_roles"
+      "table": "account_roles"
     },
     {
       "nameExplicit": false,
@@ -1085,24 +1503,24 @@
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "name": "user_roles_role_id_roles_id_fkey",
+      "name": "account_roles_role_id_roles_id_fkey",
       "entityType": "fks",
       "schema": "public",
-      "table": "user_roles"
+      "table": "account_roles"
     },
     {
       "nameExplicit": false,
       "columns": [
-        "user_id"
+        "person_id"
       ],
       "schemaTo": "public",
-      "tableTo": "users",
+      "tableTo": "person",
       "columnsTo": [
         "id"
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "name": "sessions_user_id_users_id_fkey",
+      "name": "sessions_person_id_person_id_fkey",
       "entityType": "fks",
       "schema": "public",
       "table": "sessions"
@@ -1133,19 +1551,39 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "users_pkey",
+      "name": "person_pkey",
       "schema": "public",
-      "table": "users",
+      "table": "person",
       "entityType": "pks"
     },
     {
       "columns": [
-        "user_id"
+        "id"
       ],
       "nameExplicit": false,
-      "name": "staff_profiles_pkey",
+      "name": "accounts_pkey",
       "schema": "public",
-      "table": "staff_profiles",
+      "table": "accounts",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "job_titles_pkey",
+      "schema": "public",
+      "table": "job_titles",
+      "entityType": "pks"
+    },
+    {
+      "columns": [
+        "person_id"
+      ],
+      "nameExplicit": false,
+      "name": "staff_pkey",
+      "schema": "public",
+      "table": "staff",
       "entityType": "pks"
     },
     {
@@ -1173,9 +1611,9 @@
         "id"
       ],
       "nameExplicit": false,
-      "name": "user_roles_pkey",
+      "name": "account_roles_pkey",
       "schema": "public",
-      "table": "user_roles",
+      "table": "account_roles",
       "entityType": "pks"
     },
     {
@@ -1189,6 +1627,16 @@
       "entityType": "pks"
     },
     {
+      "columns": [
+        "id"
+      ],
+      "nameExplicit": false,
+      "name": "verification_pkey",
+      "schema": "public",
+      "table": "verification",
+      "entityType": "pks"
+    },
+    {
       "nameExplicit": false,
       "columns": [
         "name"
@@ -1197,6 +1645,39 @@
       "name": "branches_name_key",
       "schema": "public",
       "table": "branches",
+      "entityType": "uniques"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "person_id"
+      ],
+      "nullsNotDistinct": false,
+      "name": "accounts_person_id_key",
+      "schema": "public",
+      "table": "accounts",
+      "entityType": "uniques"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "code"
+      ],
+      "nullsNotDistinct": false,
+      "name": "job_titles_code_key",
+      "schema": "public",
+      "table": "job_titles",
+      "entityType": "uniques"
+    },
+    {
+      "nameExplicit": false,
+      "columns": [
+        "name"
+      ],
+      "nullsNotDistinct": false,
+      "name": "job_titles_name_key",
+      "schema": "public",
+      "table": "job_titles",
       "entityType": "uniques"
     },
     {
@@ -1220,6 +1701,17 @@
       "schema": "public",
       "table": "sessions",
       "entityType": "uniques"
+    },
+    {
+      "incrementBy": "1",
+      "minValue": "1",
+      "maxValue": "9223372036854775807",
+      "startWith": "1",
+      "cacheSize": 1,
+      "cycle": false,
+      "name": "staff_code_seq",
+      "entityType": "sequences",
+      "schema": "public"
     }
   ],
   "renames": []

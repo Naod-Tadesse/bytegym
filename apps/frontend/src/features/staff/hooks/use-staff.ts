@@ -21,19 +21,30 @@ export interface CreateStaffPayload {
   firstName: string;
   lastName: string;
   phone: string;
-  password: string;
+  /**
+   * Omit it entirely to hire someone with no login — no account row is
+   * created, so there is nothing to authenticate against. A job title whose
+   * `canHaveAccount` is false rejects one with a 400, and so does any
+   * `roleIds` sent without it: roles hang off the account.
+   */
+  password?: string;
   dateOfBirth?: string;
   gender?: string;
-  staffCode: string;
   primaryBranchId: string;
-  jobTitle: string;
+  jobTitleId: string;
   hiredOn: string;
   dataScope: DataScope;
   roleIds: string[];
 }
 
+/**
+ * Employment only. `dataScope` and `roleIds` are deliberately absent: they are
+ * access decisions, and the API contract for changing them is owned by
+ * `features/users`. The endpoint still accepts them — this type is what stops
+ * the HR form from quietly sending one.
+ */
 export type UpdateStaffPayload = Partial<
-  Omit<CreateStaffPayload, 'phone' | 'password' | 'staffCode'>
+  Omit<CreateStaffPayload, 'phone' | 'password' | 'dataScope' | 'roleIds'>
 > & {
   employmentStatus?: StaffListItem['employmentStatus'];
 };
@@ -81,6 +92,9 @@ export function useCreateStaff() {
     mutationFn: (data: CreateStaffPayload) => apiClient.post('', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['staff'] });
+      // Hiring with a password creates the account too, so they appear on the
+      // users list immediately.
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.add({ title: 'Staff member created', type: 'success' });
       navigate({ to: '/staff' });
     },
@@ -113,31 +127,44 @@ export function useUpdateStaff() {
   return { updateStaff: mutation.mutate, isPending: mutation.isPending };
 }
 
-/** Administrative reset — no current password, and it signs them out. */
-export function useResetStaffPassword(onSuccess?: () => void) {
+/**
+ * Creates the account row that IS the right to sign in — the transition from
+ * employee to user. Ongoing credential management lives in `features/users`;
+ * this is here because Users cannot list someone who has no login yet.
+ *
+ * 400s when the job title has `canHaveAccount: false` (a cleaner) or they are
+ * terminated; 409s when they already have one. The interceptor toasts all
+ * three, so nothing is pre-checked.
+ */
+export function useGrantStaffAccess(onSuccess?: () => void) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: ({
       staffId,
-      newPassword,
+      password,
+      roleIds,
     }: {
       staffId: string;
-      newPassword: string;
-    }) => apiClient.patch(`/${staffId}/password`, { newPassword }),
-    onSuccess: () => {
-      // Nothing on the staff row changes, but their sessions are now revoked.
+      password: string;
+      roleIds: string[];
+    }) =>
+      apiClient.post<{ id: string }>(`/${staffId}/access`, {
+        password,
+        roleIds,
+      }),
+    onSuccess: (_, { staffId }) => {
       queryClient.invalidateQueries({ queryKey: ['staff'] });
-      toast.add({
-        title: 'Password reset — they must sign in again',
-        type: 'success',
-      });
+      queryClient.invalidateQueries({ queryKey: ['staff', 'detail', staffId] });
+      // They now appear on the Users list, which they did not before.
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.add({ title: 'System access granted', type: 'success' });
       onSuccess?.();
     },
   });
 
   return {
-    resetPasswordAsync: mutation.mutateAsync,
+    grantAccessAsync: mutation.mutateAsync,
     isPending: mutation.isPending,
   };
 }
@@ -151,6 +178,9 @@ export function useTerminateStaff() {
     onSuccess: (_, { staffId }) => {
       queryClient.invalidateQueries({ queryKey: ['staff'] });
       queryClient.invalidateQueries({ queryKey: ['staff', 'detail', staffId] });
+      // Terminating deletes the account outright, so they drop off the users
+      // list — it must not keep showing them as able to sign in.
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.add({ title: 'Staff member terminated', type: 'success' });
     },
   });

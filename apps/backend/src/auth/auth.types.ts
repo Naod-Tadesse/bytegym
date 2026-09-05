@@ -2,11 +2,17 @@ import type { DataScope } from '../common/enums';
 
 /** Claims we sign into the access token. */
 export interface JwtPayload {
-  /** users.id */
+  /** person.id — the standard JWT subject claim, kept as `sub`. */
   sub: string;
-  /** staff_profiles.user_id — same value as sub for staff, kept explicit */
+  /** staff.person_id — same value as sub for staff, kept explicit */
   staffId: string;
-  /** staff_profiles.primary_branch_id — what `branch` scope filters to. */
+  /**
+   * accounts.id — NOT the same value as sub. Roles hang off the account, so
+   * permissions cannot be resolved without it, and re-querying it on every
+   * request would be a needless round trip.
+   */
+  accountId: string;
+  /** staff.primary_branch_id — what `branch` scope filters to. */
   branchId: string;
   /** `all` skips the branch filter entirely. */
   dataScope: DataScope;
@@ -20,8 +26,9 @@ export interface JwtPayload {
 
 /** What JwtStrategy.validate() puts on request.user. */
 export interface AuthenticatedUser {
-  userId: string;
+  personId: string;
   staffId: string;
+  accountId: string;
   branchId: string;
   dataScope: DataScope;
   permissions: string[];

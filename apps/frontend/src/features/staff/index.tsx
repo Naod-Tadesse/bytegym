@@ -63,7 +63,7 @@ function StaffContent() {
               ? (row) =>
                   navigate({
                     to: '/staff/$staffId',
-                    params: { staffId: row.userId },
+                    params: { staffId: row.personId },
                   })
               : undefined
           }

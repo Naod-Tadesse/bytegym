@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Delete02Icon,
-  LockPasswordIcon,
   MoreHorizontalIcon,
+  UserUnlock01Icon,
   PencilEdit02Icon,
   ViewIcon,
 } from '@hugeicons/core-free-icons';
@@ -22,6 +22,11 @@ import { usePermissions } from '@/features/auth/hooks/use-permissions';
 import { useStaffContext } from '../context/staff-context';
 import type { StaffListItem } from '../data/types';
 
+/**
+ * Employment actions only. Reset password, grant access and revoke access all
+ * live on the users screen now — this roster answers "who works here", not
+ * "who can sign in", and mixing the two is what made the old menu confusing.
+ */
 export function StaffRowActions({
   staffMember,
 }: {
@@ -35,20 +40,27 @@ export function StaffRowActions({
 
   const canRead = hasPermission('staff.read');
   const canUpdate = hasPermission('staff.update');
-  const canResetPassword = hasPermission('staff.resetPassword');
   // The API refuses this with a 403; hiding it saves the round trip.
-  const isSelf = currentUser?.id === staffMember.userId;
+  const isSelf = currentUser?.id === staffMember.personId;
   const canTerminate =
     hasPermission('staff.terminate') &&
     !isSelf &&
     staffMember.employmentStatus !== 'terminated';
 
-  if (!canRead && !canUpdate && !canResetPassword && !canTerminate) return null;
+  // Only for someone who has no login yet — every other credential action
+  // belongs on Users, which can already list them once they do.
+  const canGrantAccess =
+    hasPermission('staff.grantAccess') &&
+    !staffMember.hasAccount &&
+    staffMember.employmentStatus !== 'terminated';
+
+  // Nothing to offer — do not render an empty menu.
+  if (!canRead && !canUpdate && !canGrantAccess && !canTerminate) return null;
 
   const goTo = (to: '/staff/$staffId' | '/staff/$staffId/edit') => () =>
-    navigate({ to, params: { staffId: staffMember.userId } });
+    navigate({ to, params: { staffId: staffMember.personId } });
 
-  const openDialog = (dialog: 'resetPassword' | 'terminate') => () => {
+  const openDialog = (dialog: 'terminate' | 'grantAccess') => () => {
     setCurrentRow(staffMember);
     setOpen(dialog);
   };
@@ -72,10 +84,10 @@ export function StaffRowActions({
             {t('actions.edit')}
           </DropdownMenuItem>
         )}
-        {canResetPassword && (
-          <DropdownMenuItem onClick={openDialog('resetPassword')}>
-            <HugeiconsIcon icon={LockPasswordIcon} data-icon="inline-start" />
-            {t('staff.resetPassword.action')}
+        {canGrantAccess && (
+          <DropdownMenuItem onClick={openDialog('grantAccess')}>
+            <HugeiconsIcon icon={UserUnlock01Icon} data-icon="inline-start" />
+            {t('staff.grantAccess.action')}
           </DropdownMenuItem>
         )}
         {canTerminate && (

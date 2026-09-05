@@ -18,8 +18,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   /** Whatever this returns becomes request.user. */
   validate(payload: JwtPayload): AuthenticatedUser {
     return {
-      userId: payload.sub,
+      personId: payload.sub,
       staffId: payload.staffId,
+      accountId: payload.accountId,
       branchId: payload.branchId,
       // A token minted before data_scope existed has neither claim; treat it
       // as the narrower scope rather than handing it the whole gym.

@@ -38,7 +38,7 @@ function StaffDetailView({ staffMember }: { staffMember: StaffDetailType }) {
   const fullName = `${staffMember.firstName} ${staffMember.lastName}`;
   const canTerminate =
     hasPermission('staff.terminate') &&
-    currentUser?.id !== staffMember.userId &&
+    currentUser?.id !== staffMember.personId &&
     staffMember.employmentStatus !== 'terminated';
 
   return (
@@ -54,7 +54,7 @@ function StaffDetailView({ staffMember }: { staffMember: StaffDetailType }) {
             onClick={() =>
               navigate({
                 to: '/staff/$staffId/edit',
-                params: { staffId: staffMember.userId },
+                params: { staffId: staffMember.personId },
               })
             }
           >
@@ -145,11 +145,27 @@ function StaffDetailView({ staffMember }: { staffMember: StaffDetailType }) {
               : '—'}
           </DetailRow>
           <Separator />
-          <DetailRow label={t('staff.fields.lastLogin')}>
-            {staffMember.lastLoginAt
-              ? format(parseISO(staffMember.lastLoginAt), 'PPp')
-              : t('staff.detail.neverSignedIn')}
+          <DetailRow label={t('staff.fields.access')}>
+            {staffMember.hasAccount ? (
+              <Badge variant="secondary">{t('staff.access.has')}</Badge>
+            ) : (
+              <Badge variant="outline" className="text-muted-foreground">
+                {t('staff.access.none')}
+              </Badge>
+            )}
           </DetailRow>
+          {/* Sourced from the account, so with no account there is no "never
+              signed in" to report — there is nothing to sign in to. */}
+          {staffMember.hasAccount && (
+            <>
+              <Separator />
+              <DetailRow label={t('staff.fields.lastLogin')}>
+                {staffMember.lastLoginAt
+                  ? format(parseISO(staffMember.lastLoginAt), 'PPp')
+                  : t('staff.detail.neverSignedIn')}
+              </DetailRow>
+            </>
+          )}
         </CardContent>
       </Card>
 

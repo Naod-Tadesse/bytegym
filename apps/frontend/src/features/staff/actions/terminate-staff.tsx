@@ -8,7 +8,7 @@ import { useTerminateStaff } from '../hooks/use-staff';
 interface TerminateStaffDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  staffMember: Pick<StaffListItem, 'userId' | 'firstName' | 'lastName'>;
+  staffMember: Pick<StaffListItem, 'personId' | 'firstName' | 'lastName'>;
 }
 
 export function TerminateStaffDialog({
@@ -33,7 +33,7 @@ export function TerminateStaffDialog({
       isPending={isPending}
       // A 403 (terminating yourself) already surfaced via the interceptor.
       onConfirm={() =>
-        settle(terminateStaffAsync({ staffId: staffMember.userId }))
+        settle(terminateStaffAsync({ staffId: staffMember.personId }))
       }
     />
   );

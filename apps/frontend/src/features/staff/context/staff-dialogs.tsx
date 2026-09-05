@@ -1,4 +1,4 @@
-import { ResetPasswordDialog } from '../actions/reset-password-dialog';
+import { GrantAccessDialog } from '../actions/grant-access-dialog';
 import { TerminateStaffDialog } from '../actions/terminate-staff';
 import { useStaffContext } from './staff-context';
 
@@ -18,14 +18,14 @@ export function StaffDialogs() {
     <>
       <TerminateStaffDialog
         // Keyed by row: retargeting remounts with the right state.
-        key={`terminate-${currentRow.userId}`}
+        key={`terminate-${currentRow.personId}`}
         open={open === 'terminate'}
         onOpenChange={close}
         staffMember={currentRow}
       />
-      <ResetPasswordDialog
-        key={`reset-${currentRow.userId}`}
-        open={open === 'resetPassword'}
+      <GrantAccessDialog
+        key={`grant-${currentRow.personId}`}
+        open={open === 'grantAccess'}
         onOpenChange={close}
         staffMember={currentRow}
       />

@@ -3,6 +3,16 @@ import { Pool, type PoolConfig } from 'pg';
 
 export type Database = NodePgDatabase;
 
+/**
+ * The handle passed to a `db.transaction()` callback. Derived from Database
+ * rather than named directly, so it tracks the driver's own generics.
+ *
+ * Anything reading or writing inside a transaction must take `Database |
+ * Transaction` and be handed the `tx` — closing over `this.db` silently runs
+ * on a different pooled connection, outside the transaction.
+ */
+export type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
+
 export interface DatabaseClient {
   db: Database;
   pool: Pool;

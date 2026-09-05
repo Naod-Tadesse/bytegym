@@ -2,8 +2,14 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 
 import type { StaffListItem } from '../data/types';
 
-/** Create and edit are pages; these two are small enough to be dialogs. */
-export type StaffDialogType = 'terminate' | 'resetPassword';
+/**
+ * Create and edit are pages; terminate is a confirm, so it stays a dialog.
+ *
+ * `grantAccess` is the one credential action still here, because it is the
+ * only one whose subject is not yet a user — Users cannot list someone who has
+ * no login. Ongoing management (reset, disable, revoke) lives there instead.
+ */
+export type StaffDialogType = 'terminate' | 'grantAccess';
 
 interface StaffContextValue {
   open: StaffDialogType | null;

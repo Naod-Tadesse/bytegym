@@ -46,33 +46,42 @@ export class AuthService implements OnModuleInit {
   }
 
   async login({ phone, password }: LoginDto): Promise<TokenPair> {
-    const [user] = await this.db
-      .select()
-      .from(schema.users)
+    // The account row is the credential. Its ABSENCE is what stops a cleaner
+    // signing in — there is no nullable column to forget to check, because
+    // there is no row to check at all.
+    const [row] = await this.db
+      .select({ person: schema.person, account: schema.accounts })
+      .from(schema.person)
+      .leftJoin(
+        schema.accounts,
+        eq(schema.accounts.personId, schema.person.id),
+      )
       .where(
-        and(eq(schema.users.phone, phone), isNull(schema.users.deletedAt)),
+        and(eq(schema.person.phone, phone), isNull(schema.person.deletedAt)),
       );
 
     // One message for every failure mode, so this cannot be used to discover
-    // which phone numbers are registered.
+    // which phone numbers are registered — or which staff have a login.
     const invalid = () => new UnauthorizedException('Invalid credentials');
 
-    if (!user || !user.passwordHash) {
+    if (!row?.account?.passwordHash) {
       throw invalid();
     }
-    if (!(await bcrypt.compare(password, user.passwordHash))) {
+    if (!(await bcrypt.compare(password, row.account.passwordHash))) {
       throw invalid();
     }
-    if (user.status !== 'active') {
+    // Disabled keeps the credential but refuses it — the temporary lock-out,
+    // as opposed to revoking, which deletes the row.
+    if (row.account.status !== 'active') {
       throw new UnauthorizedException('This account is not active');
     }
 
-    // Members have no staff_profiles row, so they cannot log in even if someone
-    // sets a password on them.
+    // Members have no staff row, so a member account cannot reach the admin API
+    // even once member sign-in exists.
     const [staff] = await this.db
       .select()
-      .from(schema.staffProfiles)
-      .where(eq(schema.staffProfiles.userId, user.id));
+      .from(schema.staff)
+      .where(eq(schema.staff.personId, row.person.id));
 
     if (!staff) {
       throw new UnauthorizedException('This account cannot sign in');
@@ -82,11 +91,11 @@ export class AuthService implements OnModuleInit {
     }
 
     await this.db
-      .update(schema.users)
+      .update(schema.accounts)
       .set({ lastLoginAt: new Date() })
-      .where(eq(schema.users.id, user.id));
+      .where(eq(schema.accounts.id, row.account.id));
 
-    return this.issueTokens(user.id, staff.userId);
+    return this.issueTokens(row.person.id, staff.personId, row.account.id);
   }
 
   async refresh(refreshToken: string): Promise<TokenPair> {
@@ -107,7 +116,11 @@ export class AuthService implements OnModuleInit {
 
     // A valid signature with no live session means the token was already
     // rotated — i.e. someone replayed it. Kill every session for that user.
-    if (!session || session.revokedAt || session.expiresAt <= new Date()) {
+    if (
+      !session ||
+      session.revokedAt ||
+      session.refreshTokenExpiresAt <= new Date()
+    ) {
       await this.revokeAllSessions(payload.sub);
       throw new UnauthorizedException('Refresh token has been used or expired');
     }
@@ -117,10 +130,10 @@ export class AuthService implements OnModuleInit {
       .set({ revokedAt: new Date() })
       .where(eq(schema.sessions.id, session.id));
 
-    return this.issueTokens(payload.sub, payload.staffId);
+    return this.issueTokens(payload.sub, payload.staffId, payload.accountId);
   }
 
-  async logout(userId: string, refreshToken?: string): Promise<void> {
+  async logout(personId: string, refreshToken?: string): Promise<void> {
     // With a token, drop just that device. Without, drop everything.
     if (refreshToken) {
       await this.db
@@ -131,34 +144,37 @@ export class AuthService implements OnModuleInit {
         );
       return;
     }
-    await this.revokeAllSessions(userId);
+    await this.revokeAllSessions(personId);
   }
 
   async me(user: AuthenticatedUser) {
     const [row] = await this.db
       .select({
-        id: schema.users.id,
-        firstName: schema.users.firstName,
-        lastName: schema.users.lastName,
-        phone: schema.users.phone,
-        status: schema.users.status,
-        staffCode: schema.staffProfiles.staffCode,
-        jobTitle: schema.staffProfiles.jobTitle,
-        employmentStatus: schema.staffProfiles.employmentStatus,
-        dataScope: schema.staffProfiles.dataScope,
+        id: schema.person.id,
+        firstName: schema.person.firstName,
+        lastName: schema.person.lastName,
+        phone: schema.person.phone,
+        status: schema.accounts.status,
+        staffCode: schema.staff.staffCode,
+        jobTitle: schema.jobTitles.name,
+        employmentStatus: schema.staff.employmentStatus,
+        dataScope: schema.staff.dataScope,
         branchId: schema.branches.id,
         branchName: schema.branches.name,
       })
-      .from(schema.users)
+      .from(schema.person)
+      .innerJoin(schema.staff, eq(schema.staff.personId, schema.person.id))
+      // Inner, not left: you cannot be asking this without an account.
+      .innerJoin(schema.accounts, eq(schema.accounts.id, user.accountId))
       .innerJoin(
-        schema.staffProfiles,
-        eq(schema.staffProfiles.userId, schema.users.id),
+        schema.jobTitles,
+        eq(schema.jobTitles.id, schema.staff.jobTitleId),
       )
       .innerJoin(
         schema.branches,
-        eq(schema.branches.id, schema.staffProfiles.primaryBranchId),
+        eq(schema.branches.id, schema.staff.primaryBranchId),
       )
-      .where(eq(schema.users.id, user.userId));
+      .where(eq(schema.person.id, user.personId));
 
     if (!row) {
       throw new UnauthorizedException();
@@ -166,16 +182,16 @@ export class AuthService implements OnModuleInit {
 
     const roles = await this.db
       .select({ name: schema.roles.name })
-      .from(schema.userRoles)
-      .innerJoin(schema.roles, eq(schema.roles.id, schema.userRoles.roleId))
-      .where(eq(schema.userRoles.staffId, user.staffId));
+      .from(schema.accountRoles)
+      .innerJoin(schema.roles, eq(schema.roles.id, schema.accountRoles.roleId))
+      .where(eq(schema.accountRoles.accountId, user.accountId));
 
     // Read live rather than echoing the token, so a revoked permission shows up
     // in the UI before the token expires.
     return {
       ...row,
       roles: roles.map((role) => role.name),
-      permissions: await this.resolvePermissions(user.staffId, row.dataScope),
+      permissions: await this.resolvePermissions(user.accountId, row.dataScope),
     };
   }
 
@@ -184,10 +200,14 @@ export class AuthService implements OnModuleInit {
     { currentPassword, newPassword }: ChangePasswordDto,
   ): Promise<void> {
     const [row] = await this.db
-      .select({ passwordHash: schema.users.passwordHash })
-      .from(schema.users)
-      .where(eq(schema.users.id, user.userId));
+      .select({ passwordHash: schema.accounts.passwordHash })
+      .from(schema.accounts)
+      .where(eq(schema.accounts.id, user.accountId));
 
+    // No account, or an account with no password (a member signing in by SMS),
+    // cannot change a password it does not have. This is also why the endpoint
+    // can never be used to set a FIRST password — granting access is a
+    // deliberate, permissioned act on the staff module.
     if (!row?.passwordHash) {
       throw new UnauthorizedException();
     }
@@ -196,25 +216,27 @@ export class AuthService implements OnModuleInit {
     }
 
     await this.db
-      .update(schema.users)
+      .update(schema.accounts)
       .set({ passwordHash: await bcrypt.hash(newPassword, BCRYPT_ROUNDS) })
-      .where(eq(schema.users.id, user.userId));
+      .where(eq(schema.accounts.id, user.accountId));
 
     // Changing a password logs out every other device.
-    await this.revokeAllSessions(user.userId);
+    await this.revokeAllSessions(user.personId);
   }
 
   // ----- internals ------------------------------------------------------
 
   private async issueTokens(
-    userId: string,
+    personId: string,
     staffId: string,
+    accountId: string,
   ): Promise<TokenPair> {
     const { branchId, dataScope } = await this.loadScope(staffId);
-    const permissions = await this.resolvePermissions(staffId, dataScope);
+    const permissions = await this.resolvePermissions(accountId, dataScope);
     const payload: JwtPayload = {
-      sub: userId,
+      sub: personId,
       staffId,
+      accountId,
       branchId,
       dataScope,
       permissions,
@@ -234,12 +256,20 @@ export class AuthService implements OnModuleInit {
       },
     );
 
-    const decoded = this.jwt.decode(refreshToken) as { exp: number };
+    const decodedRefresh = this.jwt.decode(refreshToken) as { exp: number };
+    const decodedAccess = this.jwt.decode(accessToken) as { exp?: number };
 
     await this.db.insert(schema.sessions).values({
-      userId,
+      personId,
+      // Every session minted here is for the admin API. Member sessions will
+      // come from a separate endpoint signed with a different secret.
+      audience: 'staff',
+      accessTokenHash: hashRefreshToken(accessToken),
+      accessTokenExpiresAt: decodedAccess?.exp
+        ? new Date(decodedAccess.exp * 1000)
+        : null,
       refreshTokenHash: hashRefreshToken(refreshToken),
-      expiresAt: new Date(decoded.exp * 1000),
+      refreshTokenExpiresAt: new Date(decodedRefresh.exp * 1000),
     });
 
     return { accessToken, refreshToken };
@@ -251,11 +281,11 @@ export class AuthService implements OnModuleInit {
   ): Promise<{ branchId: string; dataScope: DataScope }> {
     const [row] = await this.db
       .select({
-        branchId: schema.staffProfiles.primaryBranchId,
-        dataScope: schema.staffProfiles.dataScope,
+        branchId: schema.staff.primaryBranchId,
+        dataScope: schema.staff.dataScope,
       })
-      .from(schema.staffProfiles)
-      .where(eq(schema.staffProfiles.userId, staffId));
+      .from(schema.staff)
+      .where(eq(schema.staff.personId, staffId));
 
     if (!row) {
       throw new UnauthorizedException('This account cannot sign in');
@@ -264,13 +294,13 @@ export class AuthService implements OnModuleInit {
   }
 
   private async resolvePermissions(
-    staffId: string,
+    accountId: string,
     dataScope: DataScope,
   ): Promise<string[]> {
     const rows = await this.db
       .selectDistinct({ name: schema.permissions.name })
-      .from(schema.userRoles)
-      .innerJoin(schema.roles, eq(schema.roles.id, schema.userRoles.roleId))
+      .from(schema.accountRoles)
+      .innerJoin(schema.roles, eq(schema.roles.id, schema.accountRoles.roleId))
       .innerJoin(
         schema.rolePermissions,
         eq(schema.rolePermissions.roleId, schema.roles.id),
@@ -281,7 +311,7 @@ export class AuthService implements OnModuleInit {
       )
       .where(
         and(
-          eq(schema.userRoles.staffId, staffId),
+          eq(schema.accountRoles.accountId, accountId),
           eq(schema.roles.isActive, true),
           isNull(schema.roles.deletedAt),
         ),
@@ -299,13 +329,19 @@ export class AuthService implements OnModuleInit {
       : names.filter((name) => !name.startsWith('branch.'));
   }
 
-  private async revokeAllSessions(userId: string): Promise<void> {
+  /**
+   * Staff sessions only. Roles, branch and data_scope are baked into a STAFF
+   * access token, so a grant change must not also sign the same human out of
+   * the member app, where none of it applies.
+   */
+  private async revokeAllSessions(personId: string): Promise<void> {
     await this.db
       .update(schema.sessions)
       .set({ revokedAt: new Date() })
       .where(
         and(
-          eq(schema.sessions.userId, userId),
+          eq(schema.sessions.personId, personId),
+          eq(schema.sessions.audience, 'staff'),
           isNull(schema.sessions.revokedAt),
         ),
       );

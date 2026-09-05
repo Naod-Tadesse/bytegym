@@ -1,20 +1,17 @@
 // ============================================================
-// GYM MANAGEMENT — AUTH
+// GYM MANAGEMENT
 // Single gym per deployment. Multi branch. Paste into dbdiagram.io
-// One row per human. Staff and member are profiles, not a type column.
 // ============================================================
 
-Project gym_auth {
+Project gym {
 database_type: 'PostgreSQL'
-Note: 'Staff log in with phone and password. Members do not log in. A person can be staff and member at the same time. Identity is permanent and separate from status: member_profiles says someone has ever been a member, membership_periods says whether they are one now.'
 }
 
 // ---------------- ENUMS ----------------
 
-Enum user_status {
+Enum account_status {
 active
-suspended [note: 'barred from the premises entirely, not the same as being fired']
-deactivated
+disabled
 }
 
 Enum gender_type {
@@ -26,6 +23,35 @@ Enum employment_status {
 active
 on_leave
 terminated
+}
+
+Enum data_scope {
+branch
+all
+}
+
+Enum session_audience {
+staff
+member
+}
+
+Enum verification_purpose {
+login_otp
+phone_change
+}
+
+Enum payment_method {
+cash
+telebirr
+cbe_birr
+bank_transfer
+card
+}
+
+Enum payment_kind {
+membership
+registration
+other
 }
 
 // ---------------- BRANCHES ----------------
@@ -43,95 +69,196 @@ updated_at timestamptz [not null, default: `now()`]
 
 // ---------------- IDENTITY ----------------
 
-Table users {
+Table person {
 id uuid [pk, default: `gen_random_uuid()`]
 first_name varchar(80) [not null]
 last_name varchar(80) [not null]
-phone varchar(30) [not null, unique, note: 'login handle for staff, contact handle for members. store one normalised format']
-password_hash text [note: 'bcrypt. NULL means this person cannot log in, which is every member']
+phone varchar(30) [not null, unique]
 date_of_birth date
 gender gender_type
-status user_status [not null, default: 'active']
-last_login_at timestamptz
-registered_by_user_id uuid [note: 'the staff member who created this record']
+registered_by_person_id uuid
 created_at timestamptz [not null, default: `now()`]
 updated_at timestamptz [not null, default: `now()`]
-deleted_at timestamptz [note: 'soft delete, history must survive']
-
-indexes {
-status
+deleted_at timestamptz
 }
 
-Note: 'One row per human, forever. There is NO user_type column. What a person is comes from which profile rows exist.'
-}
-
-Table member_profiles {
-user_id uuid [pk]
-member_code varchar(24) [not null, unique, note: 'e.g. MBR-000123. follows the human forever, across every join and rejoin']
-emergency_contact_name varchar(120)
-emergency_contact_phone varchar(30)
-created_at timestamptz [not null, default: `now()`]
-updated_at timestamptz [not null, default: `now()`]
-
-Note: 'The existence of this row is what makes someone a member, ever. It is the stable identity and the FK target for check_ins. Whether they are a member RIGHT NOW is a question about membership_periods, not about this row.'
-}
-
-Table membership_periods {
+Table job_titles {
 id uuid [pk, default: `gen_random_uuid()`]
-user_id uuid [not null]
-home_branch_id uuid [not null]
-all_branches_access boolean [not null, default: false]
-is_complimentary boolean [not null, default: false, note: 'staff who train free. a fact about this stint, not about the job']
-joined_on date [not null, default: `current_date`]
-left_on date [note: 'set when they stop training here. never delete the row']
+code varchar(40) [not null, unique]
+name varchar(80) [not null, unique]
+can_have_account boolean [not null, default: false]
+is_active boolean [not null, default: true]
 created_at timestamptz [not null, default: `now()`]
 updated_at timestamptz [not null, default: `now()`]
-
-indexes {
-(user_id, joined_on)
-left_on
 }
 
-Note: 'One row per stint. Lapse-and-return is normal gym behaviour, so a member who leaves in 2024 and rejoins in 2026 gets two rows and both are preserved. Enforce at most one OPEN period per member with a partial unique index, which DBML cannot express: CREATE UNIQUE INDEX ON membership_periods (user_id) WHERE left_on IS NULL. A member is active today when a row exists with left_on IS NULL. Home branch and complimentary status live here because they can differ between stints.'
-}
-
-Table staff_profiles {
-user_id uuid [pk]
+Table staff {
+person_id uuid [pk]
 staff_code varchar(24) [not null, unique]
 primary_branch_id uuid [not null]
-job_title varchar(80) [not null, note: 'display label only, permissions come from roles']
+job_title_id uuid [not null]
+data_scope data_scope [not null, default: 'branch']
 employment_status employment_status [not null, default: 'active']
 hired_on date [not null]
 terminated_on date
 created_at timestamptz [not null, default: `now()`]
 updated_at timestamptz [not null, default: `now()`]
+}
 
-Note: 'The existence of this row is what makes someone staff. Terminated staff keep the row so history survives. Firing someone must not touch users.status.'
+Table member {
+person_id uuid [pk]
+member_code varchar(24) [not null, unique]
+branch_id uuid [not null]
+is_suspended boolean [not null, default: false]
+suspension_reason varchar(255)
+emergency_contact_name varchar(120)
+emergency_contact_phone varchar(30)
+created_at timestamptz [not null, default: `now()`]
+updated_at timestamptz [not null, default: `now()`]
+
+indexes {
+branch_id
+}
+}
+
+// ---------------- AUTHENTICATION ----------------
+
+Table accounts {
+id uuid [pk, default: `gen_random_uuid()`]
+person_id uuid [not null, unique]
+status account_status [not null, default: 'active']
+password_hash text
+last_login_at timestamptz
+created_at timestamptz [not null, default: `now()`]
+updated_at timestamptz [not null, default: `now()`]
+}
+
+Table verification {
+id uuid [pk, default: `gen_random_uuid()`]
+identifier varchar(30) [not null]
+purpose verification_purpose [not null]
+code_hash char(64) [not null]
+expires_at timestamptz [not null]
+consumed_at timestamptz
+attempts int [not null, default: 0]
+created_at timestamptz [not null, default: `now()`]
+
+indexes {
+(identifier, purpose)
+expires_at
+}
+}
+
+Table sessions {
+id uuid [pk, default: `gen_random_uuid()`]
+person_id uuid [not null]
+audience session_audience [not null]
+access_token_hash char(64) [unique]
+access_token_expires_at timestamptz
+refresh_token_hash char(64) [not null, unique]
+refresh_token_expires_at timestamptz [not null]
+revoked_at timestamptz
+created_at timestamptz [not null, default: `now()`]
+
+indexes {
+(person_id, revoked_at)
+(person_id, audience, revoked_at)
+}
+}
+
+// ---------------- MEMBERSHIP ----------------
+
+Table membership_plans {
+id uuid [pk, default: `gen_random_uuid()`]
+name varchar(120) [not null, unique]
+description varchar(500)
+duration_days int [not null]
+price numeric(12,2) [not null]
+session_quota int
+is_active boolean [not null, default: true]
+created_at timestamptz [not null, default: `now()`]
+updated_at timestamptz [not null, default: `now()`]
+}
+
+Table memberships {
+id uuid [pk, default: `gen_random_uuid()`]
+member_id uuid [not null]
+plan_id uuid [not null]
+starts_on date [not null, default: `current_date`]
+ends_on date [not null]
+price numeric(12,2) [not null]
+session_quota int
+sessions_used int [not null, default: 0]
+is_complimentary boolean [not null, default: false]
+sold_by_staff_id uuid
+created_at timestamptz [not null, default: `now()`]
+updated_at timestamptz [not null, default: `now()`]
+deleted_at timestamptz
+
+indexes {
+(member_id, ends_on)
+ends_on
+}
+}
+
+Table payments {
+id uuid [pk, default: `gen_random_uuid()`]
+member_id uuid [not null]
+membership_id uuid
+branch_id uuid [not null]
+kind payment_kind [not null, default: 'membership']
+amount numeric(12,2) [not null]
+method payment_method [not null]
+reference varchar(80)
+received_by_staff_id uuid [not null]
+received_at timestamptz [not null, default: `now()`]
+note varchar(255)
+voided_at timestamptz
+voided_by_staff_id uuid
+void_reason varchar(255)
+created_at timestamptz [not null, default: `now()`]
+
+indexes {
+membership_id
+(member_id, received_at)
+(branch_id, received_at)
+}
+}
+
+Table membership_freezes {
+id uuid [pk, default: `gen_random_uuid()`]
+membership_id uuid [not null]
+starts_on date [not null]
+ends_on date [not null]
+reason varchar(255)
+created_by_staff_id uuid [not null]
+created_at timestamptz [not null, default: `now()`]
+cancelled_at timestamptz
+
+indexes {
+(membership_id, starts_on)
+}
 }
 
 // ---------------- AUTHORIZATION ----------------
 
 Table roles {
 id uuid [pk, default: `gen_random_uuid()`]
-name varchar(255) [not null, note: 'owner, manager, receptionist, trainer']
+name varchar(255) [not null]
 description varchar(500)
 is_active boolean [not null, default: true]
 deleted_at timestamptz
 created_at timestamptz [not null, default: `now()`]
 updated_at timestamptz [not null, default: `now()`]
-
-Note: 'Roles carry no fields of their own, only permissions. No member role here, that is the profile row. name is NOT plainly unique because this table soft deletes: use a partial unique index so a deleted role does not squat the name forever. CREATE UNIQUE INDEX ON roles (name) WHERE deleted_at IS NULL.'
 }
 
 Table permissions {
 id uuid [pk, default: `gen_random_uuid()`]
-name varchar(255) [not null, unique, note: 'the key checked in code, e.g. member.create']
+name varchar(255) [not null, unique]
 display_name varchar(255) [not null]
 description varchar(500)
-group varchar(100) [not null, note: 'how the permission is bucketed in the admin UI, e.g. Members, Billing']
+group varchar(100) [not null]
 created_at timestamptz [not null, default: `now()`]
-
-Note: 'No soft delete here, so a plain unique on name is safe. WARNING: "group" is a reserved word in SQL and must be double quoted in raw queries. Drizzle quotes identifiers for you, so this only bites in hand written SQL and psql.'
 }
 
 Table role_permissions {
@@ -141,62 +268,44 @@ permission_id uuid [not null]
 indexes {
 (role_id, permission_id) [pk]
 }
-
-Note: 'Composite PK, no surrogate id. Granting the same permission twice is meaningless, so the PK is the constraint.'
 }
 
-Table user_roles {
+Table account_roles {
 id uuid [pk, default: `gen_random_uuid()`]
-staff_id uuid [not null, note: 'FK to staff_profiles, so only staff can hold a role at all']
+account_id uuid [not null]
 role_id uuid [not null]
 created_at timestamptz [not null, default: `now()`]
 
 indexes {
-(staff_id, role_id) [unique]
+(account_id, role_id) [unique]
 }
-
-Note: 'Roles are gym wide. Branch scoping was deliberately dropped: a role applies everywhere the staff member works, and which branches those are comes from staff_profiles.primary_branch_id. Revoking is a delete. Pointing at staff_profiles rather than users means a member cannot be granted a role, enforced by the FK rather than by app code.'
-}
-
-Table sessions {
-id uuid [pk, default: `gen_random_uuid()`]
-user_id uuid [not null]
-refresh_token_hash char(64) [not null, unique, note: 'store the hash, never the token']
-expires_at timestamptz [not null]
-revoked_at timestamptz
-created_at timestamptz [not null, default: `now()`]
-
-indexes {
-(user_id, revoked_at)
-}
-
-Note: 'Only here so logout and force-logout work. Drop this table if you go with short lived stateless tokens.'
 }
 
 // ---------------- ATTENDANCE ----------------
 
 Table check_ins {
 id bigint [pk, increment]
-member_user_id uuid [not null, note: 'FK points at member_profiles, so a non member physically cannot have a check in']
+member_id uuid [not null]
+membership_id uuid
 branch_id uuid [not null]
-recorded_by_user_id uuid [note: 'the staff member who logged the entry']
+recorded_by_person_id uuid
+override_by_staff_id uuid
 checked_in_at timestamptz [not null, default: `now()`]
 checked_out_at timestamptz
 
 indexes {
-(member_user_id, checked_in_at)
+(member_id, checked_in_at)
 (branch_id, checked_in_at)
+membership_id
 }
-
-Note: 'Members only. Staff shifts are different data and belong in their own table if you ever need them. The FK still points at member_profiles rather than membership_periods on purpose: it must enforce is a member without breaking when someone checks in on the day a stint opens or closes. Which period a check in fell inside is derivable from checked_in_at. The FK enforces is a member, not is paid up, which is app logic once plans exist.'
 }
 
 // ---------------- AUDIT ----------------
 
 Table audit_logs {
 id bigint [pk, increment]
-actor_user_id uuid
-action varchar(80) [not null, note: 'user.created, role.granted, staff.terminated']
+actor_person_id uuid
+action varchar(80) [not null]
 entity_type varchar(60) [not null]
 entity_id varchar(64) [not null]
 changes jsonb
@@ -211,23 +320,101 @@ created_at
 
 // ---------------- RELATIONSHIPS ----------------
 
-Ref: users.registered_by_user_id > users.id
+Ref: person.registered_by_person_id > person.id
 
-Ref: member_profiles.user_id - users.id
-Ref: membership_periods.user_id > member_profiles.user_id
-Ref: membership_periods.home_branch_id > branches.id
-Ref: staff_profiles.user_id - users.id
-Ref: staff_profiles.primary_branch_id > branches.id
+Ref: member.person_id - person.id
+Ref: member.branch_id > branches.id
+Ref: staff.person_id - person.id
+Ref: staff.primary_branch_id > branches.id
+Ref: staff.job_title_id > job_titles.id
+
+Ref: accounts.person_id - person.id
+Ref: sessions.person_id > person.id
+
+Ref: memberships.member_id > member.person_id
+Ref: memberships.plan_id > membership_plans.id
+Ref: memberships.sold_by_staff_id > staff.person_id
+
+Ref: payments.member_id > member.person_id
+Ref: payments.membership_id > memberships.id
+Ref: payments.branch_id > branches.id
+Ref: payments.received_by_staff_id > staff.person_id
+Ref: payments.voided_by_staff_id > staff.person_id
+
+Ref: membership_freezes.membership_id > memberships.id
+Ref: membership_freezes.created_by_staff_id > staff.person_id
 
 Ref: role_permissions.role_id > roles.id
 Ref: role_permissions.permission_id > permissions.id
-Ref: user_roles.staff_id > staff_profiles.user_id
-Ref: user_roles.role_id > roles.id
+Ref: account_roles.account_id > accounts.id
+Ref: account_roles.role_id > roles.id
 
-Ref: sessions.user_id > users.id
-
-Ref: check_ins.member_user_id > member_profiles.user_id
+Ref: check_ins.member_id > member.person_id
+Ref: check_ins.membership_id > memberships.id
 Ref: check_ins.branch_id > branches.id
-Ref: check_ins.recorded_by_user_id > users.id
+Ref: check_ins.recorded_by_person_id > person.id
+Ref: check_ins.override_by_staff_id > staff.person_id
 
-Ref: audit_logs.actor_user_id > users.id
+Ref: audit_logs.actor_person_id > person.id
+
+// ---------------- STATUS LIVES WITH WHAT IT DESCRIBES ----------------
+//
+// There is deliberately NO person.status. Every state anyone reaches for
+// belongs to something more specific, and a column on person would only
+// duplicate one of them and then drift:
+//
+//   Can they sign in      accounts.status        active | disabled
+//   Barred from the gym   member.is_suspended    + suspension_reason
+//   Still employed        staff.employment_status
+//
+// accounts.status is an enum, not a boolean, because a third state is coming:
+// `locked`, set automatically after repeated failed sign-ins. Admin-disabled
+// and auto-locked want different messages and different ways back in.
+//
+// member.is_suspended is a boolean because it has exactly two states and always
+// will. Note what it is NOT: whether a member is active, expired or frozen is
+// DERIVED from memberships and membership_freezes, never stored. Storing it
+// would need a nightly job, and the day that job fails the column lies — the
+// same trap as the old membership_periods.left_on.
+//
+//   active / frozen / expired / never   computed, returned on the member
+//                                       response, never a column
+//   suspended                           stored, because a human decided it
+//
+// DISABLE vs REVOKE on a login: disabling keeps the password, so re-enabling
+// hands back the credential they already know; revoking deletes the accounts
+// row and the role grants cascade with it. Disable a suspension you mean to
+// lift; revoke when access should stop existing.
+
+// ---------------- CONSTRAINTS DBML CANNOT EXPRESS ----------------
+//
+// CREATE UNIQUE INDEX roles_name_active_uniq ON roles (name)
+//   WHERE deleted_at IS NULL;
+//
+// CREATE EXTENSION IF NOT EXISTS btree_gist;
+// ALTER TABLE memberships ADD CONSTRAINT memberships_no_overlap
+//   EXCLUDE USING gist (
+//     member_id WITH =,
+//     daterange(starts_on, ends_on, '[]') WITH &&
+//   ) WHERE (deleted_at IS NULL);
+//
+// job_titles is a CODE catalogue, like permissions — seeded from
+// src/database/job-titles.data.ts, with no API to create or edit one. Anything
+// the application branches on cannot be user-typed, or "Senior Trainer" and
+// "Trainner" silently get none of the behaviour attached to trainers.
+//
+//   code          name          can_have_account
+//   owner         Owner         true
+//   manager       Manager       true
+//   receptionist  Receptionist  true
+//   trainer       Trainer       false
+//   cleaner       Cleaner       false
+//
+// TWO RULES for anything built on this:
+//   1. Branch on `code`, never on `name`. The name is a label a gym may rename;
+//      the code never changes.
+//   2. Prefer a capability FLAG over a code comparison. can_have_account is the
+//      pattern — when trainers gain meal plans, add can_train_members rather
+//      than scattering code = 'trainer' about, so a gym that calls them Coaches
+//      still works. Permissions answer "may they do X"; these answer "what are
+//      they".

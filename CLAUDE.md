@@ -79,8 +79,9 @@ access, and there is no repository layer.
 ## Transactions
 
 **Any write touching more than one table goes in `db.transaction(...)`.** A single-statement write
-is already atomic — wrapping it adds nothing. Creating a staff member (users → staff_profiles →
-user_roles) is the canonical example.
+is already atomic — wrapping it adds nothing. Creating a staff member (person → accounts → staff →
+account_roles) is the canonical example, and note the second step is conditional: no password means
+no `accounts` row, which is how an employee with no login is created.
 
 Three rules that are easy to get wrong, and have been:
 
@@ -130,6 +131,43 @@ per service.
 
 ## Auth and authorisation
 
+**Credentials live in `accounts`, not on `users`.** One row per human (`user_id` unique), holding
+`password_hash` and `last_login_at` — nothing else. The *existence* of the row is the right to
+authenticate: a cleaner is a full employee with **no** `accounts` row, so there is no nullable
+column to forget to check. A member's row has a null `password_hash` and signs in by SMS code.
+Revoking access is **deleting** the row, not soft-deleting — a revoked credential should stop
+existing. There is deliberately no `provider` or `identifier` column: the endpoint already knows
+the method, and login looks people up by `person.phone`, which is why that stays unique.
+
+**Disable and revoke are different things.** `accounts.status` (`active` | `disabled`) switches a
+login off while **keeping the password**, so re-enabling hands back the credential they already
+know — that is the suspension you intend to lift, `PATCH /api/staff/:id/access`. Revoking
+(`DELETE`) deletes the account row and cascades away their role grants. Both revoke live staff
+sessions. It is an enum rather than a boolean because `locked` is coming, for automatic lockout
+after failed sign-ins, which wants a different message and a different way back in.
+
+**Status lives with the thing it describes — there is no `person.status`.** Every state anyone
+reaches for belongs somewhere more specific, and a column on `person` would only duplicate one and
+then drift:
+
+| Question | Column |
+| --- | --- |
+| Can they sign in? | `accounts.status` |
+| Barred from the premises? | `member.is_suspended` (when that table lands) |
+| Still employed? | `staff.employment_status` |
+
+And note what is **not** stored: whether a member is active, expired or frozen is **derived** from
+`memberships` and `membership_freezes` at query time. Storing it would need a nightly job, and the
+day that job fails the column lies — the same trap as the old `membership_periods.left_on`. Only
+`suspended` is stored, because a human decided it.
+
+**Two audiences, two signing secrets.** `/auth/login` (staff, password) signs with `JWT_SECRET`;
+`/app/auth/login` (member, SMS code) signs with `JWT_APP_SECRET`. A member token therefore fails
+*verification* on the admin API rather than merely failing authorisation — which is what closes the
+hole under "a route with no `@Permissions()` is authenticated-only". Never collapse this to a claim
+the guard has to remember to check. Audience comes from **which profile row exists**, never from
+the credential type.
+
 Two global guards in `app.module.ts`, and **the order matters**: `JwtAuthGuard` (authenticate)
 then `PermissionsGuard` (authorise). Both honour `@Public()`.
 
@@ -146,7 +184,9 @@ then `PermissionsGuard` (authorise). Both honour `@Public()`.
   do not accept an actor id as a parameter.
 - Revoking access means revoking sessions. Deleting a role, or changing a staff member's roles,
   must revoke their sessions in the same transaction — otherwise a live JWT keeps permissions that
-  no longer exist.
+  no longer exist. Filter by `sessions.audience = 'staff'`: roles, `data_scope` and branch are
+  baked into a *staff* token only, so a grant change must not sign the same human out of the
+  member app, where none of it applies.
 - Guard self-destructive actions (`ForbiddenException` when `id === currentUser.staffId`).
 - Phone numbers are stored and validated in **local Ethiopian form**, `/^0[79]\d{8}$/`. Never
   `+251`. `normalisePhone()` in `src/auth/phone.ts` strips a pasted `+251`/`251` first.
@@ -186,12 +226,17 @@ Spans both apps — the backend enforces, the frontend only hides.
 ## The model
 
 ```
-users ──< user_roles >── roles ──< role_permissions >── permissions
+person ─── accounts ──< account_roles >── roles ──< role_permissions >── permissions
+   └────── staff ──── job_titles (can_have_account)
 ```
 
-A staff member holds roles; roles hold permissions; a permission is a string. There is **no
-`member` role** — being a member is the existence of a profile row, not a role. Roles carry no
-fields of their own beyond name/description/isActive.
+An **account** holds roles; roles hold permissions; a permission is a string. Roles hang off the
+account, not the staff row, so the FK enforces that only someone who can actually sign in can hold
+one — a cleaner has no account, so there is nothing to attach a role to. Sending `roleIds` for
+someone with no account is a 400, not a silent no-op.
+
+There is **no `member` role** — being a member is the existence of a profile row, not a role. Roles
+carry no fields of their own beyond name/description/isActive.
 
 Permission names are `resource.action`, and the string in `@Permissions('staff.list')` is the same
 string stored in `permissions.name`. Nothing maps or namespaces them — a typo is a permission that
@@ -199,17 +244,18 @@ silently never matches.
 
 ## The catalogue
 
-Defined in `src/database/permissions.data.ts` and applied by the seed. 21 permissions in 6 groups;
+Defined in `src/database/permissions.data.ts` and applied by the seed. 25 permissions in 7 groups;
 `group` only buckets them in the admin UI.
 
-| Group          | Permissions                                                                 |
-| -------------- | --------------------------------------------------------------------------- |
-| Members        | `member.list` `member.read` `member.create` `member.update` `member.delete` |
-| Attendance     | `checkin.record` `checkin.list`                                             |
-| Staff          | `staff.list` `staff.read` `staff.create` `staff.update` `staff.terminate`   |
-| Branches       | `branch.list` `branch.create` `branch.update`                               |
-| Access control | `role.list` `role.create` `role.update` `role.delete` `role.assign`         |
-| Reporting      | `report.view`                                                               |
+| Group          | Permissions                                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Members        | `member.list` `member.read` `member.create` `member.update` `member.delete`                                                                     |
+| Attendance     | `checkin.record` `checkin.list`                                                                                                                 |
+| Staff          | `staff.list` `staff.read` `staff.create` `staff.update` `staff.terminate` `staff.resetPassword` `staff.grantAccess` `staff.revokeAccess`         |
+| Job titles     | `jobTitle.list` — read only, the catalogue is code                                                                                              |
+| Branches       | `branch.list` `branch.create` `branch.update`                                                                                                   |
+| Access control | `role.list` `role.create` `role.update` `role.delete` `role.assign`                                                                             |
+| Reporting      | `report.view`                                                                                                                                   |
 
 **To add one:** append it to `permissions.data.ts` and re-run `db-seed`. The seed is idempotent
 (`onConflictDoNothing` on `permissions.name`) and re-links the Owner role to everything, so a new
@@ -219,6 +265,30 @@ is code.
 Note the gaps, they are deliberate: there is no `branch.delete` (deactivating a branch requires
 `branch.update`), and `staff.list` and `staff.read` are separate so a role can see the roster
 without opening individual records.
+
+The three staff-access permissions are deliberately distinct, because they are three different
+acts: `staff.resetPassword` helps someone locked out of an account they already have,
+`staff.grantAccess` hands someone a login for the first time, and `staff.revokeAccess` takes one
+away. A receptionist might reasonably hold the first and none of the others.
+
+## Job titles are a second code catalogue
+
+`src/database/job-titles.data.ts`, applied by the seed, exactly like the permission catalogue —
+**there is no API to create or edit one**, only `GET /api/job-titles`. The reason is the same:
+application logic branches on these, so a user-typed "Senior Trainer" or "Trainner" would silently
+get none of the behaviour attached to trainers, with no error anywhere.
+
+Two rules for anything built on top:
+
+1. **Branch on `code`, never on `name`.** `name` is a display label a gym may want to change;
+   `code` is the stable join point and never changes. `JOB_TITLE_CODES` in that file holds them.
+2. **Prefer a capability flag over a code comparison.** `canHaveAccount` is the pattern — when
+   trainers gain meal plans, add `canTrainMembers` rather than scattering `code === 'trainer'`
+   through the codebase, so a gym that calls them Coaches still works. Permissions answer *may they
+   do X*; these flags answer *what are they*.
+
+To add a title: append it to `job-titles.data.ts` and re-run `db-seed`. Idempotent on `code`, so no
+migration is needed.
 
 ## Two sources of truth — this is the part that bites
 
@@ -262,8 +332,11 @@ would make it return `string[] | null` and everything else follows.
 
 Four rules:
 
-- **The filter column differs per table** — `check_ins.branch_id`, `membership_periods.home_branch_id`,
-  `staff_profiles.primary_branch_id`. The helper takes it as an argument.
+- **The filter column differs per table** — `check_ins.branch_id`, `payments.branch_id`,
+  `staff_profiles.primary_branch_id`. The helper takes it as an argument. `memberships` has no
+  branch column of its own: it scopes through `member_profiles.branch_id`, a join the list query
+  already pays for. Do not denormalise a copy onto it — a member's branch never moves, so the copy
+  could only ever drift.
 - **Writes need it too, or read-scoping is theatre.** `findOne`/`update`/`remove` all call
   `assertInScope`; without it a branch manager can PATCH another branch's staff by guessing an id.
 - **Out-of-scope records 404, not 403** — a 403 turns the endpoint into an existence oracle for

@@ -7,12 +7,12 @@ import {
   EMPLOYMENT_STATUSES,
   GENDER_ENUM_NAME,
   GENDERS,
-  USER_STATUS_ENUM_NAME,
-  USER_STATUSES,
+  ACCOUNT_STATUS_ENUM_NAME,
+  ACCOUNT_STATUSES,
   type DataScope,
   type EmploymentStatus,
   type Gender,
-  type UserStatus,
+  type AccountStatus,
 } from '../../common/enums';
 
 export class StaffRoleRefDto {
@@ -28,16 +28,31 @@ export class StaffListItemDto {
     type: String,
     format: 'uuid',
     description:
-      'The identifier everywhere: staff_profiles is keyed by the user id, so ' +
-      'this is what /staff/{id} takes.',
+      'The identifier everywhere: staff is keyed by the person id, so this is ' +
+      'what /staff/{id} takes.',
   })
-  userId!: string;
+  personId!: string;
 
   @ApiProperty({ type: String, example: 'STF-000001' })
   staffCode!: string;
 
   @ApiProperty({ type: String, example: 'Receptionist' })
   jobTitle!: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description: 'Send this back on update, not the label.',
+  })
+  jobTitleId!: string;
+
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'Whether they can sign in. False means no account row exists at all — ' +
+      'an employee on the roster with no way in, such as a cleaner.',
+  })
+  hasAccount!: boolean;
 
   @ApiProperty({
     enum: [...EMPLOYMENT_STATUSES],
@@ -65,11 +80,15 @@ export class StaffListItemDto {
   phone!: string;
 
   @ApiProperty({
-    enum: [...USER_STATUSES],
-    enumName: USER_STATUS_ENUM_NAME,
-    description: 'Account state, independent of employmentStatus.',
+    enum: [...ACCOUNT_STATUSES],
+    enumName: ACCOUNT_STATUS_ENUM_NAME,
+    nullable: true,
+    description:
+      'The state of their login, or null when they have none (hasAccount ' +
+      'false). Independent of employmentStatus: an employee on leave may keep ' +
+      'an active login, and a working one may have it disabled.',
   })
-  status!: UserStatus;
+  status!: AccountStatus | null;
 
   @ApiProperty({ type: String, format: 'uuid' })
   branchId!: string;
@@ -108,12 +127,12 @@ export class StaffDetailDto extends StaffListItemDto {
 
 /**
  * POST /staff only. Deliberately narrower than StaffDetailDto: create returns
- * the raw staff_profiles insert row, so there are no names, no phone, no
- * branchName and no roles. Refetch GET /staff/{userId} for the full record.
+ * the raw staff insert row, so there are no names, no phone, no branchName and
+ * no roles. Refetch GET /staff/{personId} for the full record.
  */
 export class StaffProfileDto {
   @ApiProperty({ type: String, format: 'uuid' })
-  userId!: string;
+  personId!: string;
 
   @ApiProperty({ type: String, example: 'STF-000003' })
   staffCode!: string;
@@ -123,6 +142,21 @@ export class StaffProfileDto {
 
   @ApiProperty({ type: String, example: 'Receptionist' })
   jobTitle!: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description: 'Send this back on update, not the label.',
+  })
+  jobTitleId!: string;
+
+  @ApiProperty({
+    type: Boolean,
+    description:
+      'Whether they can sign in. False means no account row exists at all — ' +
+      'an employee on the roster with no way in, such as a cleaner.',
+  })
+  hasAccount!: boolean;
 
   @ApiProperty({
     enum: [...EMPLOYMENT_STATUSES],
@@ -146,7 +180,7 @@ export class StaffProfileDto {
   updatedAt!: string;
 }
 
-/** DELETE /staff/{id} returns only the id of the soft-deleted user. */
+/** DELETE /staff/{id} returns only the id of the soft-deleted person. */
 export class StaffDeletedDto {
   @ApiProperty({ type: String, format: 'uuid' })
   id!: string;

@@ -94,21 +94,34 @@ export class RolesService {
   }
 
   /**
-   * Soft delete. Detaching user_roles in the same transaction matters: without
-   * it a staff member keeps a dangling grant, and their live access token still
-   * carries permissions from a role that no longer exists — so we also revoke
-   * their sessions, forcing a re-login that reissues a correct token.
+   * Soft delete. Detaching account_roles in the same transaction matters:
+   * without it someone keeps a dangling grant, and their live access token
+   * still carries permissions from a role that no longer exists — so we also
+   * revoke their sessions, forcing a re-login that reissues a correct token.
    */
   async remove(id: string) {
     await this.findOne(id);
 
-    const affected = await this.db
-      .select({ staffId: schema.userRoles.staffId })
-      .from(schema.userRoles)
-      .where(eq(schema.userRoles.roleId, id));
-
     const role = await this.db.transaction(async (tx) => {
-      await tx.delete(schema.userRoles).where(eq(schema.userRoles.roleId, id));
+      // Read INSIDE the transaction. Selecting the holders first and then
+      // opening a transaction leaves a gap: anyone granted the role in that
+      // window keeps a live token carrying a deleted role's permissions —
+      // exactly what this is written to prevent.
+      //
+      // Joins back through accounts because roles hang off the account, while
+      // sessions are keyed by person.
+      const affected = await tx
+        .selectDistinct({ personId: schema.accounts.personId })
+        .from(schema.accountRoles)
+        .innerJoin(
+          schema.accounts,
+          eq(schema.accounts.id, schema.accountRoles.accountId),
+        )
+        .where(eq(schema.accountRoles.roleId, id));
+
+      await tx
+        .delete(schema.accountRoles)
+        .where(eq(schema.accountRoles.roleId, id));
 
       const [deleted] = await tx
         .update(schema.roles)
@@ -123,9 +136,12 @@ export class RolesService {
           .where(
             and(
               inArray(
-                schema.sessions.userId,
-                affected.map((row) => row.staffId),
+                schema.sessions.personId,
+                affected.map((row) => row.personId),
               ),
+              // Roles only affect a staff token — do not sign the same human
+              // out of the member app.
+              eq(schema.sessions.audience, 'staff'),
               isNull(schema.sessions.revokedAt),
             ),
           );

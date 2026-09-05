@@ -57,15 +57,19 @@ export class CreateStaffDto {
   @Matches(PHONE_REGEX, { message: PHONE_MESSAGE })
   phone!: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: String,
     minLength: 8,
     description:
-      'Their initial password. Changed later via /auth/change-password.',
+      'Their initial password. OMIT IT to create an employee with no system ' +
+      'access at all — a cleaner — which creates no account row, so there is ' +
+      'no credential to authenticate against. Only a job title with ' +
+      '`canHaveAccount` accepts one. Changed later via /auth/change-password.',
   })
+  @IsOptional()
   @IsString()
   @MinLength(8)
-  password!: string;
+  password?: string;
 
   @ApiPropertyOptional({
     type: String,
@@ -82,16 +86,8 @@ export class CreateStaffDto {
   @IsIn([...GENDERS])
   gender?: Gender;
 
-  @ApiProperty({
-    type: String,
-    maxLength: 24,
-    example: 'STF-000003',
-    description: 'Must be unique across all staff, terminated ones included.',
-  })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(24)
-  staffCode!: string;
+  // staffCode is deliberately absent — the server draws it from a sequence
+  // (`ST00001`, `ST00002`, …). Anything sent here is stripped by whitelist.
 
   @ApiProperty({ type: String, format: 'uuid' })
   @IsUUID()
@@ -109,11 +105,15 @@ export class CreateStaffDto {
   @IsIn([...DATA_SCOPES])
   dataScope?: DataScope;
 
-  @ApiProperty({ type: String, maxLength: 80, example: 'Receptionist' })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(80)
-  jobTitle!: string;
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    description:
+      'From GET /api/job-titles. Whether this person may hold a login is ' +
+      'decided by the title’s `canHaveAccount`.',
+  })
+  @IsUUID()
+  jobTitleId!: string;
 
   @ApiProperty({ type: String, format: 'date', example: '2026-01-15' })
   @IsDateString()
@@ -170,11 +170,10 @@ export class UpdateStaffDto {
   @IsIn([...DATA_SCOPES])
   dataScope?: DataScope;
 
-  @ApiPropertyOptional({ type: String, maxLength: 80 })
+  @ApiPropertyOptional({ type: String, format: 'uuid' })
   @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  jobTitle?: string;
+  @IsUUID()
+  jobTitleId?: string;
 
   @ApiPropertyOptional({
     enum: [...EMPLOYMENT_STATUSES],

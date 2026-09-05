@@ -15,32 +15,35 @@ import { FieldGroup } from '@/components/ui/field';
 import { Spinner } from '@/components/ui/spinner';
 import { settle } from '@/lib/settle';
 import { resetPasswordSchema } from '../data/schema';
-import type { StaffListItem } from '../data/types';
-import { useResetStaffPassword } from '../hooks/use-staff';
+import type { UserListItem } from '../data/types';
+import { useResetPassword } from '../hooks/use-users';
 
 interface ResetPasswordDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  staffMember: Pick<StaffListItem, 'userId' | 'firstName' | 'lastName'>;
+  user: Pick<UserListItem, 'personId' | 'firstName' | 'lastName'>;
 }
 
 /** Two inputs, so a dialog rather than a page. */
 export function ResetPasswordDialog({
   open,
   onOpenChange,
-  staffMember,
+  user,
 }: ResetPasswordDialogProps) {
   const { t } = useTranslation();
   const close = () => onOpenChange(false);
-  const { resetPasswordAsync, isPending } = useResetStaffPassword(close);
+  const { resetPasswordAsync, isPending } = useResetPassword(close);
 
   const form = useForm({
     defaultValues: { newPassword: '', confirmPassword: '' },
     validators: { onSubmit: resetPasswordSchema },
     onSubmit: async ({ value }) => {
+      // Settled, not rethrown: the interceptor has already toasted anything
+      // that failed, and an unhandled rejection would tear down the dialog
+      // showing it.
       await settle(
         resetPasswordAsync({
-          staffId: staffMember.userId,
+          staffId: user.personId,
           // confirmPassword is a typo guard for the form only.
           newPassword: value.newPassword,
         }),
@@ -58,10 +61,10 @@ export function ResetPasswordDialog({
           }}
         >
           <DialogHeader>
-            <DialogTitle>{t('staff.resetPassword.title')}</DialogTitle>
+            <DialogTitle>{t('users.resetPassword.title')}</DialogTitle>
             <DialogDescription>
-              {t('staff.resetPassword.description', {
-                name: `${staffMember.firstName} ${staffMember.lastName}`,
+              {t('users.resetPassword.description', {
+                name: `${user.firstName} ${user.lastName}`,
               })}
             </DialogDescription>
           </DialogHeader>
@@ -70,7 +73,7 @@ export function ResetPasswordDialog({
             <FormTextField
               form={form}
               name="newPassword"
-              label={t('staff.fields.newPassword')}
+              label={t('users.fields.newPassword')}
               type="password"
               autoComplete="new-password"
               required
@@ -78,7 +81,7 @@ export function ResetPasswordDialog({
             <FormTextField
               form={form}
               name="confirmPassword"
-              label={t('staff.fields.confirmPassword')}
+              label={t('users.fields.confirmPassword')}
               type="password"
               autoComplete="new-password"
               required
@@ -96,7 +99,7 @@ export function ResetPasswordDialog({
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending && <Spinner data-icon="inline-start" />}
-              {t('staff.resetPassword.confirm')}
+              {t('users.resetPassword.confirm')}
             </Button>
           </DialogFooter>
         </form>

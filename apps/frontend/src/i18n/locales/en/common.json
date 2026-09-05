@@ -158,7 +158,12 @@
       "jobTitle": "Job title",
       "branch": "Branch",
       "roles": "Roles",
+      "access": "Access",
       "status": "Employment"
+    },
+    "access": {
+      "has": "Can sign in",
+      "none": "No login"
     },
     "fields": {
       "firstName": "First name",
@@ -166,7 +171,6 @@
       "phone": "Phone",
       "password": "Password",
       "confirmPassword": "Confirm password",
-      "newPassword": "New password",
       "dateOfBirth": "Date of birth",
       "gender": "Gender",
       "staffCode": "Staff code",
@@ -177,6 +181,7 @@
       "employmentStatus": "Employment status",
       "dataScope": "Data access",
       "roles": "Roles",
+      "access": "System access",
       "lastLogin": "Last signed in"
     },
     "placeholders": {
@@ -184,7 +189,8 @@
       "gender": "Select gender",
       "branch": "Select a branch",
       "searchBranch": "Search branches…",
-      "jobTitle": "Receptionist",
+      "jobTitle": "Select a job title",
+      "searchJobTitle": "Search job titles…",
       "roles": "Select roles"
     },
     "gender": {
@@ -203,14 +209,57 @@
     },
     "create": {
       "title": "New staff member",
-      "subtitle": "They sign in with the phone number and password you set here"
+      "subtitle": "They sign in with the phone number and password you set here",
+      "noAccountHint": "This job title cannot hold a login, so no password is set and no roles are assigned. They are still a full employee — you can grant access later if their title changes."
     },
     "edit": {
-      "title": "Edit staff member"
+      "title": "Edit staff member",
+      "accessHint": "Roles and data access are not edited here — they decide what someone may reach, not what they do. Manage them from Users."
     },
     "detail": {
       "noRoles": "No roles assigned",
       "neverSignedIn": "Never"
+    },
+    "terminate": {
+      "title": "Terminate staff member?",
+      "description": "{{name}} will be signed out immediately and can no longer sign in. Their record and history are kept.",
+      "confirm": "Terminate"
+    },
+    "grantAccess": {
+      "action": "Grant system access",
+      "title": "Grant system access",
+      "description": "Give {{name}} a login. They will sign in with their phone number and the password you set here.",
+      "confirm": "Grant access"
+    }
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "Everyone who can sign into the system, and how",
+    "actions": {
+      "search": "Search by name, phone or code…"
+    },
+    "columns": {
+      "name": "Name",
+      "jobTitle": "Job title",
+      "branch": "Branch",
+      "roles": "Roles",
+      "status": "Login",
+      "lastLogin": "Last sign-in"
+    },
+    "noRoles": "No roles",
+    "accountStatus": {
+      "active": "Active",
+      "disabled": "Disabled"
+    },
+    "fields": {
+      "newPassword": "New password",
+      "roles": "Roles",
+      "dataScope": "Data scope",
+      "password": "Password",
+      "confirmPassword": "Confirm password"
+    },
+    "placeholders": {
+      "roles": "Select roles"
     },
     "resetPassword": {
       "action": "Reset password",
@@ -218,10 +267,30 @@
       "description": "Set a new password for {{name}}. You do not need their current one. They will be signed out everywhere and must use the new password.",
       "confirm": "Reset password"
     },
-    "terminate": {
-      "title": "Terminate staff member?",
-      "description": "{{name}} will be signed out immediately and can no longer sign in. Their record and history are kept.",
-      "confirm": "Terminate"
+    "disableLogin": {
+      "action": "Disable login",
+      "title": "Disable this login?",
+      "description": "{{name}} will be signed out everywhere and refused at sign-in. Their password is kept, so enabling the login again lets them straight back in with the one they already know. Their roles are untouched.",
+      "confirm": "Disable login"
+    },
+    "enableLogin": {
+      "action": "Enable login",
+      "title": "Enable this login?",
+      "description": "{{name}} will be able to sign in again with the password they already have. No new password is set and no roles change.",
+      "confirm": "Enable login"
+    },
+    "revokeAccess": {
+      "action": "Revoke access",
+      "title": "Revoke system access?",
+      "description": "This deletes {{name}}'s login and their role grants — it is not the reversible Disable. Restoring access later means granting it again and setting a new password. They stay on the staff roster and keep their employment history.",
+      "confirm": "Revoke access"
+    },
+    "neverSignedIn": "Never signed in",
+    "editAccess": {
+      "action": "Edit access",
+      "title": "Edit access",
+      "description": "Choose what {{name}} can do once signed in. Replacing their roles signs them out, so they will need to sign in again.",
+      "confirm": "Save access"
     }
   },
   "classes": {
@@ -254,6 +323,7 @@
     },
     "dashboard": "Dashboard",
     "staff": "Staff",
+    "users": "Users",
     "roles": "Roles",
     "branches": "Branches",
     "profile": "Profile",

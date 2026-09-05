@@ -14,7 +14,7 @@ export class HealthCheckDto {
   @ApiProperty({
     type: Number,
     example: 2,
-    description: 'Row count in users, proving the connection really queried.',
+    description: 'Row count in person, proving the connection really queried.',
   })
   users!: number;
 }

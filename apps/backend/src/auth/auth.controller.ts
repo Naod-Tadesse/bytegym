@@ -90,7 +90,7 @@ export class AuthController {
   @ApiBody({ type: LogoutDto, required: false })
   @ApiNoContentResponse({ description: 'Session(s) revoked.' })
   async logout(@CurrentUser() user: AuthenticatedUser, @Body() dto: LogoutDto) {
-    await this.authService.logout(user.userId, dto?.refreshToken);
+    await this.authService.logout(user.personId, dto?.refreshToken);
   }
 
   @Get('me')
