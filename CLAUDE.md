@@ -156,10 +156,17 @@ then drift:
 | Barred from the premises? | `member.is_suspended` (when that table lands) |
 | Still employed? | `staff.employment_status` |
 
-And note what is **not** stored: whether a member is active, expired or frozen is **derived** from
-`memberships` and `membership_freezes` at query time. Storing it would need a nightly job, and the
-day that job fails the column lies — the same trap as the old `membership_periods.left_on`. Only
-`suspended` is stored, because a human decided it.
+And note what is **not** stored: whether a member is active, expired or has never joined is
+**derived** from `memberships` at query time. Storing it would need a nightly job, and the day that
+job fails the column lies — the same trap as the old `membership_periods.left_on`. Only `suspended`
+is stored, because a human decided it.
+
+**There is no membership freeze, and that is deliberate.** A freeze solves the recurring-contract
+problem — a gym that auto-bills monthly has to let you skip one. Membership here is prepaid, so a
+member who travels simply doesn't renew and buys again on their return; it's the same reasoning
+that keeps dunning and proration out of this schema. The consequence is that `memberships.ends_on`
+is set at sale and never moves, so there is no goodwill-extension mechanism. If that ever needs
+solving, it's a permissioned edit of `ends_on` with an audit entry — not a freeze table.
 
 **Two audiences, two signing secrets.** `/auth/login` (staff, password) signs with `JWT_SECRET`;
 `/app/auth/login` (member, SMS code) signs with `JWT_APP_SECRET`. A member token therefore fails

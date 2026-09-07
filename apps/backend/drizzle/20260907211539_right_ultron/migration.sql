@@ -1,0 +1,1 @@
+ALTER TABLE "check_ins" DROP COLUMN "checked_out_at";

@@ -10,6 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { isNavActive } from './is-nav-active';
 import { navGroups } from './sidebar-data';
 
 export function NavMain() {
@@ -31,8 +32,7 @@ export function NavMain() {
     <SidebarGroup className="gap-1 px-3 group-data-[collapsible=icon]:px-1">
       <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
         {items.map((item) => {
-          const isActive =
-            item.url === '/' ? pathname === '/' : pathname.startsWith(item.url);
+          const isActive = isNavActive(pathname, item.url);
 
           return (
             <SidebarMenuItem key={item.url}>

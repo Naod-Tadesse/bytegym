@@ -10,14 +10,25 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AttendanceIndexRouteImport } from './routes/attendance/index'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as BranchesIndexRouteImport } from './routes/branches/index'
 import { Route as BranchesNewRouteImport } from './routes/branches/new'
+import { Route as CheckInsIndexRouteImport } from './routes/check-ins/index'
+import { Route as MembersIndexRouteImport } from './routes/members/index'
+import { Route as MembersNewRouteImport } from './routes/members/new'
+import { Route as MembershipPlansIndexRouteImport } from './routes/membership-plans/index'
+import { Route as MembershipPlansNewRouteImport } from './routes/membership-plans/new'
+import { Route as PaymentsIndexRouteImport } from './routes/payments/index'
 import { Route as RolesIndexRouteImport } from './routes/roles/index'
 import { Route as StaffIndexRouteImport } from './routes/staff/index'
 import { Route as StaffNewRouteImport } from './routes/staff/new'
 import { Route as UsersIndexRouteImport } from './routes/users/index'
 import { Route as BranchesBranchIdEditRouteImport } from './routes/branches/$branchId.edit'
+import { Route as MembersMemberIdIndexRouteImport } from './routes/members/$memberId.index'
+import { Route as MembersMemberIdEditRouteImport } from './routes/members/$memberId.edit'
+import { Route as MembersMemberIdSellRouteImport } from './routes/members/$memberId.sell'
+import { Route as MembershipPlansPlanIdEditRouteImport } from './routes/membership-plans/$planId.edit'
 import { Route as RolesRoleIdPermissionsRouteImport } from './routes/roles/$roleId.permissions'
 import { Route as StaffStaffIdIndexRouteImport } from './routes/staff/$staffId.index'
 import { Route as StaffStaffIdEditRouteImport } from './routes/staff/$staffId.edit'
@@ -25,6 +36,11 @@ import { Route as StaffStaffIdEditRouteImport } from './routes/staff/$staffId.ed
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AttendanceIndexRoute = AttendanceIndexRouteImport.update({
+  id: '/attendance/',
+  path: '/attendance/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
@@ -40,6 +56,36 @@ const BranchesIndexRoute = BranchesIndexRouteImport.update({
 const BranchesNewRoute = BranchesNewRouteImport.update({
   id: '/branches/new',
   path: '/branches/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckInsIndexRoute = CheckInsIndexRouteImport.update({
+  id: '/check-ins/',
+  path: '/check-ins/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembersIndexRoute = MembersIndexRouteImport.update({
+  id: '/members/',
+  path: '/members/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembersNewRoute = MembersNewRouteImport.update({
+  id: '/members/new',
+  path: '/members/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembershipPlansIndexRoute = MembershipPlansIndexRouteImport.update({
+  id: '/membership-plans/',
+  path: '/membership-plans/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembershipPlansNewRoute = MembershipPlansNewRouteImport.update({
+  id: '/membership-plans/new',
+  path: '/membership-plans/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentsIndexRoute = PaymentsIndexRouteImport.update({
+  id: '/payments/',
+  path: '/payments/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RolesIndexRoute = RolesIndexRouteImport.update({
@@ -67,6 +113,27 @@ const BranchesBranchIdEditRoute = BranchesBranchIdEditRouteImport.update({
   path: '/branches/$branchId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MembersMemberIdIndexRoute = MembersMemberIdIndexRouteImport.update({
+  id: '/members/$memberId/',
+  path: '/members/$memberId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembersMemberIdEditRoute = MembersMemberIdEditRouteImport.update({
+  id: '/members/$memberId/edit',
+  path: '/members/$memberId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembersMemberIdSellRoute = MembersMemberIdSellRouteImport.update({
+  id: '/members/$memberId/sell',
+  path: '/members/$memberId/sell',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembershipPlansPlanIdEditRoute =
+  MembershipPlansPlanIdEditRouteImport.update({
+    id: '/membership-plans/$planId/edit',
+    path: '/membership-plans/$planId/edit',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const RolesRoleIdPermissionsRoute = RolesRoleIdPermissionsRouteImport.update({
   id: '/roles/$roleId/permissions',
   path: '/roles/$roleId/permissions',
@@ -87,28 +154,50 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
   '/branches/new': typeof BranchesNewRoute
+  '/members/new': typeof MembersNewRoute
+  '/membership-plans/new': typeof MembershipPlansNewRoute
   '/staff/new': typeof StaffNewRoute
+  '/attendance/': typeof AttendanceIndexRoute
   '/branches/': typeof BranchesIndexRoute
+  '/check-ins/': typeof CheckInsIndexRoute
+  '/members/': typeof MembersIndexRoute
+  '/membership-plans/': typeof MembershipPlansIndexRoute
+  '/payments/': typeof PaymentsIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/users/': typeof UsersIndexRoute
   '/branches/$branchId/edit': typeof BranchesBranchIdEditRoute
+  '/members/$memberId/edit': typeof MembersMemberIdEditRoute
+  '/members/$memberId/sell': typeof MembersMemberIdSellRoute
+  '/membership-plans/$planId/edit': typeof MembershipPlansPlanIdEditRoute
   '/roles/$roleId/permissions': typeof RolesRoleIdPermissionsRoute
   '/staff/$staffId/edit': typeof StaffStaffIdEditRoute
+  '/members/$memberId/': typeof MembersMemberIdIndexRoute
   '/staff/$staffId/': typeof StaffStaffIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
   '/branches/new': typeof BranchesNewRoute
+  '/members/new': typeof MembersNewRoute
+  '/membership-plans/new': typeof MembershipPlansNewRoute
   '/staff/new': typeof StaffNewRoute
+  '/attendance': typeof AttendanceIndexRoute
   '/branches': typeof BranchesIndexRoute
+  '/check-ins': typeof CheckInsIndexRoute
+  '/members': typeof MembersIndexRoute
+  '/membership-plans': typeof MembershipPlansIndexRoute
+  '/payments': typeof PaymentsIndexRoute
   '/roles': typeof RolesIndexRoute
   '/staff': typeof StaffIndexRoute
   '/users': typeof UsersIndexRoute
   '/branches/$branchId/edit': typeof BranchesBranchIdEditRoute
+  '/members/$memberId/edit': typeof MembersMemberIdEditRoute
+  '/members/$memberId/sell': typeof MembersMemberIdSellRoute
+  '/membership-plans/$planId/edit': typeof MembershipPlansPlanIdEditRoute
   '/roles/$roleId/permissions': typeof RolesRoleIdPermissionsRoute
   '/staff/$staffId/edit': typeof StaffStaffIdEditRoute
+  '/members/$memberId': typeof MembersMemberIdIndexRoute
   '/staff/$staffId': typeof StaffStaffIdIndexRoute
 }
 export interface FileRoutesById {
@@ -116,14 +205,25 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth/login': typeof AuthLoginRoute
   '/branches/new': typeof BranchesNewRoute
+  '/members/new': typeof MembersNewRoute
+  '/membership-plans/new': typeof MembershipPlansNewRoute
   '/staff/new': typeof StaffNewRoute
+  '/attendance/': typeof AttendanceIndexRoute
   '/branches/': typeof BranchesIndexRoute
+  '/check-ins/': typeof CheckInsIndexRoute
+  '/members/': typeof MembersIndexRoute
+  '/membership-plans/': typeof MembershipPlansIndexRoute
+  '/payments/': typeof PaymentsIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/users/': typeof UsersIndexRoute
   '/branches/$branchId/edit': typeof BranchesBranchIdEditRoute
+  '/members/$memberId/edit': typeof MembersMemberIdEditRoute
+  '/members/$memberId/sell': typeof MembersMemberIdSellRoute
+  '/membership-plans/$planId/edit': typeof MembershipPlansPlanIdEditRoute
   '/roles/$roleId/permissions': typeof RolesRoleIdPermissionsRoute
   '/staff/$staffId/edit': typeof StaffStaffIdEditRoute
+  '/members/$memberId/': typeof MembersMemberIdIndexRoute
   '/staff/$staffId/': typeof StaffStaffIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -132,42 +232,75 @@ export interface FileRouteTypes {
     | '/'
     | '/auth/login'
     | '/branches/new'
+    | '/members/new'
+    | '/membership-plans/new'
     | '/staff/new'
+    | '/attendance/'
     | '/branches/'
+    | '/check-ins/'
+    | '/members/'
+    | '/membership-plans/'
+    | '/payments/'
     | '/roles/'
     | '/staff/'
     | '/users/'
     | '/branches/$branchId/edit'
+    | '/members/$memberId/edit'
+    | '/members/$memberId/sell'
+    | '/membership-plans/$planId/edit'
     | '/roles/$roleId/permissions'
     | '/staff/$staffId/edit'
+    | '/members/$memberId/'
     | '/staff/$staffId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth/login'
     | '/branches/new'
+    | '/members/new'
+    | '/membership-plans/new'
     | '/staff/new'
+    | '/attendance'
     | '/branches'
+    | '/check-ins'
+    | '/members'
+    | '/membership-plans'
+    | '/payments'
     | '/roles'
     | '/staff'
     | '/users'
     | '/branches/$branchId/edit'
+    | '/members/$memberId/edit'
+    | '/members/$memberId/sell'
+    | '/membership-plans/$planId/edit'
     | '/roles/$roleId/permissions'
     | '/staff/$staffId/edit'
+    | '/members/$memberId'
     | '/staff/$staffId'
   id:
     | '__root__'
     | '/'
     | '/auth/login'
     | '/branches/new'
+    | '/members/new'
+    | '/membership-plans/new'
     | '/staff/new'
+    | '/attendance/'
     | '/branches/'
+    | '/check-ins/'
+    | '/members/'
+    | '/membership-plans/'
+    | '/payments/'
     | '/roles/'
     | '/staff/'
     | '/users/'
     | '/branches/$branchId/edit'
+    | '/members/$memberId/edit'
+    | '/members/$memberId/sell'
+    | '/membership-plans/$planId/edit'
     | '/roles/$roleId/permissions'
     | '/staff/$staffId/edit'
+    | '/members/$memberId/'
     | '/staff/$staffId/'
   fileRoutesById: FileRoutesById
 }
@@ -175,14 +308,25 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthLoginRoute: typeof AuthLoginRoute
   BranchesNewRoute: typeof BranchesNewRoute
+  MembersNewRoute: typeof MembersNewRoute
+  MembershipPlansNewRoute: typeof MembershipPlansNewRoute
   StaffNewRoute: typeof StaffNewRoute
+  AttendanceIndexRoute: typeof AttendanceIndexRoute
   BranchesIndexRoute: typeof BranchesIndexRoute
+  CheckInsIndexRoute: typeof CheckInsIndexRoute
+  MembersIndexRoute: typeof MembersIndexRoute
+  MembershipPlansIndexRoute: typeof MembershipPlansIndexRoute
+  PaymentsIndexRoute: typeof PaymentsIndexRoute
   RolesIndexRoute: typeof RolesIndexRoute
   StaffIndexRoute: typeof StaffIndexRoute
   UsersIndexRoute: typeof UsersIndexRoute
   BranchesBranchIdEditRoute: typeof BranchesBranchIdEditRoute
+  MembersMemberIdEditRoute: typeof MembersMemberIdEditRoute
+  MembersMemberIdSellRoute: typeof MembersMemberIdSellRoute
+  MembershipPlansPlanIdEditRoute: typeof MembershipPlansPlanIdEditRoute
   RolesRoleIdPermissionsRoute: typeof RolesRoleIdPermissionsRoute
   StaffStaffIdEditRoute: typeof StaffStaffIdEditRoute
+  MembersMemberIdIndexRoute: typeof MembersMemberIdIndexRoute
   StaffStaffIdIndexRoute: typeof StaffStaffIdIndexRoute
 }
 
@@ -193,6 +337,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/attendance/': {
+      id: '/attendance/'
+      path: '/attendance'
+      fullPath: '/attendance/'
+      preLoaderRoute: typeof AttendanceIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/login': {
@@ -214,6 +365,48 @@ declare module '@tanstack/react-router' {
       path: '/branches/new'
       fullPath: '/branches/new'
       preLoaderRoute: typeof BranchesNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/check-ins/': {
+      id: '/check-ins/'
+      path: '/check-ins'
+      fullPath: '/check-ins/'
+      preLoaderRoute: typeof CheckInsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/members/': {
+      id: '/members/'
+      path: '/members'
+      fullPath: '/members/'
+      preLoaderRoute: typeof MembersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/members/new': {
+      id: '/members/new'
+      path: '/members/new'
+      fullPath: '/members/new'
+      preLoaderRoute: typeof MembersNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/membership-plans/': {
+      id: '/membership-plans/'
+      path: '/membership-plans'
+      fullPath: '/membership-plans/'
+      preLoaderRoute: typeof MembershipPlansIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/membership-plans/new': {
+      id: '/membership-plans/new'
+      path: '/membership-plans/new'
+      fullPath: '/membership-plans/new'
+      preLoaderRoute: typeof MembershipPlansNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payments/': {
+      id: '/payments/'
+      path: '/payments'
+      fullPath: '/payments/'
+      preLoaderRoute: typeof PaymentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/roles/': {
@@ -251,6 +444,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BranchesBranchIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/members/$memberId/': {
+      id: '/members/$memberId/'
+      path: '/members/$memberId'
+      fullPath: '/members/$memberId/'
+      preLoaderRoute: typeof MembersMemberIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/members/$memberId/edit': {
+      id: '/members/$memberId/edit'
+      path: '/members/$memberId/edit'
+      fullPath: '/members/$memberId/edit'
+      preLoaderRoute: typeof MembersMemberIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/members/$memberId/sell': {
+      id: '/members/$memberId/sell'
+      path: '/members/$memberId/sell'
+      fullPath: '/members/$memberId/sell'
+      preLoaderRoute: typeof MembersMemberIdSellRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/membership-plans/$planId/edit': {
+      id: '/membership-plans/$planId/edit'
+      path: '/membership-plans/$planId/edit'
+      fullPath: '/membership-plans/$planId/edit'
+      preLoaderRoute: typeof MembershipPlansPlanIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/roles/$roleId/permissions': {
       id: '/roles/$roleId/permissions'
       path: '/roles/$roleId/permissions'
@@ -279,14 +500,25 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthLoginRoute: AuthLoginRoute,
   BranchesNewRoute: BranchesNewRoute,
+  MembersNewRoute: MembersNewRoute,
+  MembershipPlansNewRoute: MembershipPlansNewRoute,
   StaffNewRoute: StaffNewRoute,
+  AttendanceIndexRoute: AttendanceIndexRoute,
   BranchesIndexRoute: BranchesIndexRoute,
+  CheckInsIndexRoute: CheckInsIndexRoute,
+  MembersIndexRoute: MembersIndexRoute,
+  MembershipPlansIndexRoute: MembershipPlansIndexRoute,
+  PaymentsIndexRoute: PaymentsIndexRoute,
   RolesIndexRoute: RolesIndexRoute,
   StaffIndexRoute: StaffIndexRoute,
   UsersIndexRoute: UsersIndexRoute,
   BranchesBranchIdEditRoute: BranchesBranchIdEditRoute,
+  MembersMemberIdEditRoute: MembersMemberIdEditRoute,
+  MembersMemberIdSellRoute: MembersMemberIdSellRoute,
+  MembershipPlansPlanIdEditRoute: MembershipPlansPlanIdEditRoute,
   RolesRoleIdPermissionsRoute: RolesRoleIdPermissionsRoute,
   StaffStaffIdEditRoute: StaffStaffIdEditRoute,
+  MembersMemberIdIndexRoute: MembersMemberIdIndexRoute,
   StaffStaffIdIndexRoute: StaffStaffIdIndexRoute,
 }
 export const routeTree = rootRouteImport

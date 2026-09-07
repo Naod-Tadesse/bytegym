@@ -18,7 +18,9 @@
     "edit": "Edit",
     "view": "View details",
     "deactivate": "Deactivate",
-    "delete": "Delete"
+    "delete": "Delete",
+    "copied": "Copied",
+    "copyFailed": "Could not copy — select it and copy by hand"
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -40,7 +42,78 @@
   },
   "checkIns": {
     "title": "Recent check-ins",
-    "description": "Live from the front desk"
+    "description": "Live from the front desk",
+    "overrideBy": "Override by {{name}}",
+    "desk": {
+      "title": "Check in a member",
+      "subtitle": "Find them, read the verdict, let them in",
+      "searchPlaceholder": "Search by name, phone or member code…",
+      "clearSearch": "Clear the search",
+      "prompt": "Search for a member",
+      "promptHint": "Type a name, a phone number or a member code. Their membership shows before you admit them.",
+      "noMatches": "No member matches “{{search}}”",
+      "noMatchesHint": "Check the spelling, or try their phone number or member code. A new member has to be registered before they can be checked in.",
+      "moreMatches": "Showing {{shown}} of {{total}} matches — narrow the search to see the rest",
+      "noSearchPermission": "You cannot search members",
+      "noSearchPermissionHint": "Checking someone in starts with finding them, which needs permission to list members. Ask an administrator to grant it."
+    },
+    "actions": {
+      "checkIn": "Check in",
+      "override": "Override and check in",
+      "openMember": "Open member"
+    },
+    "outcome": {
+      "admitted": "Checked in at {{time}}",
+      "already": "Already checked in at {{time}}"
+    },
+    "refusal": {
+      "suspended": "Suspended — barred from the premises",
+      "suspendedNext": "Fetch a manager. An override will not let them in.",
+      "expired": "Their membership has run out",
+      "expiredOn": "Their membership ran out on {{date}}",
+      "expiredNext": "Sell them a renewal.",
+      "upcoming": "Their membership has not started yet",
+      "upcomingNext": "Nothing is owed — tell them the date it starts.",
+      "none": "They have never bought a membership",
+      "noneNext": "Sell them one to let them through the door.",
+      "upcomingOn": "Their membership starts on {{date}}"
+    },
+    "today": {
+      "title": "Today’s check-ins",
+      "subtitle": "Everyone admitted today, newest first",
+      "recordedBy": "Recorded by {{name}}",
+      "empty": "Nobody has come in yet today",
+      "emptyHint": "Check a member in above and they will appear here.",
+      "lastDay": "Last day",
+      "daysLeftUnit_one": "day left",
+      "daysLeftUnit_other": "days left"
+    }
+  },
+  "attendance": {
+    "title": "Attendance",
+    "subtitle": "Every visit recorded, newest first",
+    "visitCount_one": "{{count}} visit",
+    "visitCount_other": "{{count}} visits",
+    "overrideBy": "Override by {{name}}",
+    "copyMemberCode": "Copy member code",
+    "columns": {
+      "date": "Date",
+      "time": "Time",
+      "member": "Member",
+      "branch": "Branch",
+      "recordedBy": "Recorded by",
+      "override": "Override"
+    },
+    "filters": {
+      "allMembers": "All members",
+      "searchMembers": "Search by name, phone or member code…",
+      "noMembers": "No member matches that",
+      "clearMember": "Clear the member filter",
+      "allBranches": "All branches",
+      "searchBranches": "Search branches…",
+      "noBranches": "No branch matches that",
+      "clearBranch": "Clear the branch filter"
+    }
   },
   "tabs": {
     "members": "Members",
@@ -48,12 +121,228 @@
   },
   "members": {
     "title": "Members",
+    "subtitle": "Everyone who trains here",
     "description": "Every membership state pairs a colour with an icon, never colour alone",
+    "actions": {
+      "create": "New member",
+      "search": "Search by name, phone or code…",
+      "suspend": "Suspend",
+      "unsuspend": "Lift suspension",
+      "sellMembership": "Sell membership"
+    },
     "columns": {
       "member": "Member",
+      "phone": "Phone",
+      "branch": "Branch",
       "plan": "Plan",
+      "membership": "Membership",
       "status": "Status",
+      "joined": "Joined",
       "lastVisit": "Last visit"
+    },
+    "suspension": {
+      "active": "Active",
+      "suspended": "Suspended"
+    },
+    "status": {
+      "active": "Active",
+      "expired": "Expired",
+      "never": "No membership",
+      "until": "until {{date}}",
+      "upcoming": "Starts later",
+      "coveredUntil": "covered to {{date}}"
+    },
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "phone": "Phone",
+      "dateOfBirth": "Date of birth",
+      "gender": "Gender",
+      "memberCode": "Member code",
+      "branch": "Home branch",
+      "emergencyContactName": "Emergency contact",
+      "emergencyContactPhone": "Emergency contact phone",
+      "joined": "Joined",
+      "plan": "Plan",
+      "startsOn": "Starts on",
+      "isComplimentary": "Complimentary",
+      "isComplimentaryHint": "Nothing is owed for this membership. It still covers the same dates and still blocks a second membership over them."
+    },
+    "placeholders": {
+      "pickDate": "Pick a date",
+      "gender": "Select gender",
+      "branch": "Select a branch",
+      "searchBranch": "Search branches…",
+      "plan": "Select a plan",
+      "searchPlan": "Search plans…",
+      "startsToday": "Starts today"
+    },
+    "memberships": {
+      "title": "Memberships",
+      "subtitle": "Every membership sold to this member, newest first",
+      "empty": "No membership yet. Sell one to let them through the door.",
+      "complimentary": "Complimentary",
+      "chargeable": "Chargeable",
+      "showMore": "Show more ({{shown}} of {{total}})",
+      "includesRegistration": "includes {{amount}} registration",
+      "columns": {
+        "plan": "Plan",
+        "cover": "Cover",
+        "amountDue": "Amount due",
+        "balance": "Balance",
+        "type": "Type",
+        "soldBy": "Sold by"
+      }
+    },
+    "sellMembership": {
+      "title": "Sell a membership",
+      "coverTitle": "Cover",
+      "coverSubtitle": "The end date comes from the plan's duration and the price is recorded as it stands today, so a later price change does not restate this sale.",
+      "paymentTitle": "Payment",
+      "paymentSubtitle": "Selling and taking the money are one act at the desk, so both are recorded together.",
+      "pickPlanFirst": "Choose a plan to see what is due.",
+      "planPrice": "Plan price",
+      "registrationFee": "Registration fee",
+      "registrationFeeHint": "Charged once, because this is their first membership. A renewal is the plan price alone.",
+      "amountDue": "Amount due",
+      "takePaymentNow": "Payment taken now",
+      "takePaymentNowHint": "Records the full amount due against this sale. Turn it off to sell on account and take the money later — the membership starts owing the whole balance.",
+      "confirm": "Sell membership"
+    },
+    "create": {
+      "title": "New member",
+      "subtitle": "Register someone at the front desk — you can sell them a membership next"
+    },
+    "edit": {
+      "title": "Edit member"
+    },
+    "suspend": {
+      "title": "Suspend this member?",
+      "description": "{{name}} will be refused at the door until the suspension is lifted, whether or not their membership is paid up. Their record, memberships and history are kept.",
+      "confirm": "Suspend"
+    },
+    "unsuspend": {
+      "title": "Lift this suspension?",
+      "description": "{{name}} will be admitted again, provided their membership covers today. Nothing else about their record changes.",
+      "confirm": "Lift suspension"
+    },
+    "delete": {
+      "title": "Delete member?",
+      "description": "{{name}} will stop appearing anywhere a member can be chosen. Their memberships, payments and check-ins are kept on record."
+    }
+  },
+  "payments": {
+    "title": "Payments",
+    "subtitle": "Every payment taken, newest first — voided ones included",
+    "totalReceived": "Received: {{total}}",
+    "voided": "Voided",
+    "voidedByReason": "Voided by {{name}} — {{reason}}",
+    "actions": {
+      "record": "Record payment",
+      "void": "Void payment",
+      "openMember": "Open member",
+      "alreadyVoided": "This payment is already voided"
+    },
+    "columns": {
+      "date": "Date",
+      "member": "Member",
+      "method": "Method",
+      "amount": "Amount",
+      "reference": "Reference",
+      "branch": "Branch",
+      "receivedBy": "Received by"
+    },
+    "method": {
+      "cash": "Cash",
+      "telebirr": "Telebirr",
+      "cbeBirr": "CBE Birr",
+      "bankTransfer": "Bank transfer",
+      "card": "Card"
+    },
+    "dateRange": {
+      "all": "All dates",
+      "partial": "From {{date}}",
+      "clear": "Clear the date range"
+    },
+    "fields": {
+      "amount": "Amount (ETB)",
+      "method": "How it was paid",
+      "reference": "Reference",
+      "reason": "Why it is being voided"
+    },
+    "placeholders": {
+      "amount": "800.00",
+      "method": "Select how it was paid",
+      "reference": "Transaction or receipt number",
+      "reason": "Entered twice by mistake"
+    },
+    "record": {
+      "title": "Record a payment",
+      "descriptionForMembership": "{{name}} owes {{balance}} on their {{plan}} membership. Part payments are normal — record what is being handed over now and the balance updates.",
+      "confirm": "Record payment"
+    },
+    "void": {
+      "title": "Void this payment?",
+      "description": "The {{amount}} taken from {{name}} will stop counting towards the day's total, and any membership it paid for will owe it again. The payment stays on the record, marked void, with the reason you give here.",
+      "confirm": "Void payment"
+    },
+    "member": {
+      "title": "Payments",
+      "subtitle": "{{total}} received from this member. Voided payments are listed but not counted.",
+      "empty": "No payments recorded for this member yet.",
+      "showMore": "Show more ({{shown}} of {{total}})"
+    }
+  },
+  "plans": {
+    "title": "Membership plans",
+    "subtitle": "What a member can buy, and how long it covers them for",
+    "actions": {
+      "create": "New plan",
+      "search": "Search plans…",
+      "retire": "Retire",
+      "alreadyRetired": "This plan is already retired — put it back on sale from the edit page"
+    },
+    "columns": {
+      "name": "Plan",
+      "duration": "Duration",
+      "price": "Price",
+      "registrationFee": "Registration",
+      "status": "Status"
+    },
+    "noRegistrationFee": "None",
+    "duration": "{{count}} days",
+    "duration_one": "{{count}} day",
+    "duration_other": "{{count}} days",
+    "status": {
+      "active": "On sale",
+      "retired": "Retired"
+    },
+    "fields": {
+      "name": "Plan name",
+      "description": "Description",
+      "durationDays": "Duration in days",
+      "price": "Price (ETB)",
+      "registrationFee": "Registration fee (ETB)",
+      "registrationFeeHint": "A one-off joining fee, added to this plan's price only when the buyer has never held a membership. Leave it at 0 for a plan that charges none.",
+      "isActive": "On sale",
+      "isActiveHint": "Retiring a plan only stops it being sold. Memberships already on it keep running to their end date, and the plan stays on every record that names it."
+    },
+    "placeholders": {
+      "name": "Monthly",
+      "description": "Full gym access for 30 days"
+    },
+    "create": {
+      "title": "New plan",
+      "subtitle": "The end date is inclusive — a 30-day plan bought today runs to day 29"
+    },
+    "edit": {
+      "title": "Edit plan",
+      "priceHint": "Correct a mistake here, but do not raise a price in place: create the new plan and retire this one instead, or reports cannot tell which product was sold."
+    },
+    "retire": {
+      "title": "Retire this plan?",
+      "description": "{{name}} will stop appearing where a membership can be sold. Memberships already sold on it keep running to their end date and nothing a member has paid for changes. You can put it back on sale by editing it.",
+      "confirm": "Retire"
     }
   },
   "status": {
@@ -68,7 +357,8 @@
     "subtitle": "The locations this gym operates from",
     "actions": {
       "create": "New branch",
-      "search": "Search branches…"
+      "search": "Search branches…",
+      "alreadyInactive": "This branch is already deactivated"
     },
     "columns": {
       "name": "Name",
@@ -150,15 +440,16 @@
     "actions": {
       "create": "New staff member",
       "search": "Search by name, phone or code…",
-      "terminate": "Terminate"
+      "terminate": "Terminate",
+      "terminateSelf": "You cannot terminate your own record",
+      "alreadyTerminated": "They have already been terminated"
     },
+    "copyPhone": "Copy phone number",
     "columns": {
       "name": "Name",
       "phone": "Phone",
       "jobTitle": "Job title",
       "branch": "Branch",
-      "roles": "Roles",
-      "access": "Access",
       "status": "Employment"
     },
     "access": {
@@ -227,6 +518,7 @@
     },
     "grantAccess": {
       "action": "Grant system access",
+      "terminated": "A terminated staff member cannot be given a login",
       "title": "Grant system access",
       "description": "Give {{name}} a login. They will sign in with their phone number and the password you set here.",
       "confirm": "Grant access"
@@ -236,11 +528,11 @@
     "title": "Users",
     "subtitle": "Everyone who can sign into the system, and how",
     "actions": {
-      "search": "Search by name, phone or code…"
+      "search": "Search by name, phone or code…",
+      "notYourself": "You cannot change your own access"
     },
     "columns": {
       "name": "Name",
-      "jobTitle": "Job title",
       "branch": "Branch",
       "roles": "Roles",
       "status": "Login",
@@ -322,6 +614,11 @@
       "admin": "Admin"
     },
     "dashboard": "Dashboard",
+    "checkIns": "Check-ins",
+    "attendance": "Attendance",
+    "members": "Members",
+    "payments": "Payments",
+    "membershipPlans": "Plans",
     "staff": "Staff",
     "users": "Users",
     "roles": "Roles",

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Kbd } from '@/components/ui/kbd';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { isNavActive } from '../is-nav-active';
 import { navGroups } from '../sidebar-data';
 import { HeaderUserNav } from './header-user-nav';
 
@@ -16,9 +17,7 @@ function useCurrentPage() {
 
   for (const group of navGroups) {
     for (const item of group.items) {
-      const isMatch =
-        item.url === '/' ? pathname === '/' : pathname.startsWith(item.url);
-      if (isMatch) return { group, item };
+      if (isNavActive(pathname, item.url)) return { group, item };
     }
   }
   return null;

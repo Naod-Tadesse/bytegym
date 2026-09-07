@@ -110,7 +110,6 @@ person_id uuid [pk]
 member_code varchar(24) [not null, unique]
 branch_id uuid [not null]
 is_suspended boolean [not null, default: false]
-suspension_reason varchar(255)
 emergency_contact_name varchar(120)
 emergency_contact_phone varchar(30)
 created_at timestamptz [not null, default: `now()`]
@@ -174,7 +173,6 @@ name varchar(120) [not null, unique]
 description varchar(500)
 duration_days int [not null]
 price numeric(12,2) [not null]
-session_quota int
 is_active boolean [not null, default: true]
 created_at timestamptz [not null, default: `now()`]
 updated_at timestamptz [not null, default: `now()`]
@@ -187,8 +185,6 @@ plan_id uuid [not null]
 starts_on date [not null, default: `current_date`]
 ends_on date [not null]
 price numeric(12,2) [not null]
-session_quota int
-sessions_used int [not null, default: 0]
 is_complimentary boolean [not null, default: false]
 sold_by_staff_id uuid
 created_at timestamptz [not null, default: `now()`]
@@ -222,21 +218,6 @@ indexes {
 membership_id
 (member_id, received_at)
 (branch_id, received_at)
-}
-}
-
-Table membership_freezes {
-id uuid [pk, default: `gen_random_uuid()`]
-membership_id uuid [not null]
-starts_on date [not null]
-ends_on date [not null]
-reason varchar(255)
-created_by_staff_id uuid [not null]
-created_at timestamptz [not null, default: `now()`]
-cancelled_at timestamptz
-
-indexes {
-(membership_id, starts_on)
 }
 }
 
@@ -290,12 +271,12 @@ membership_id uuid
 branch_id uuid [not null]
 recorded_by_person_id uuid
 override_by_staff_id uuid
+checked_in_on date [not null]
 checked_in_at timestamptz [not null, default: `now()`]
-checked_out_at timestamptz
 
 indexes {
-(member_id, checked_in_at)
-(branch_id, checked_in_at)
+(member_id, checked_in_on) [unique]
+(branch_id, checked_in_on)
 membership_id
 }
 }
@@ -341,9 +322,6 @@ Ref: payments.branch_id > branches.id
 Ref: payments.received_by_staff_id > staff.person_id
 Ref: payments.voided_by_staff_id > staff.person_id
 
-Ref: membership_freezes.membership_id > memberships.id
-Ref: membership_freezes.created_by_staff_id > staff.person_id
-
 Ref: role_permissions.role_id > roles.id
 Ref: role_permissions.permission_id > permissions.id
 Ref: account_roles.account_id > accounts.id
@@ -364,7 +342,7 @@ Ref: audit_logs.actor_person_id > person.id
 // duplicate one of them and then drift:
 //
 //   Can they sign in      accounts.status        active | disabled
-//   Barred from the gym   member.is_suspended    + suspension_reason
+//   Barred from the gym   member.is_suspended
 //   Still employed        staff.employment_status
 //
 // accounts.status is an enum, not a boolean, because a third state is coming:
@@ -372,14 +350,50 @@ Ref: audit_logs.actor_person_id > person.id
 // and auto-locked want different messages and different ways back in.
 //
 // member.is_suspended is a boolean because it has exactly two states and always
-// will. Note what it is NOT: whether a member is active, expired or frozen is
-// DERIVED from memberships and membership_freezes, never stored. Storing it
-// would need a nightly job, and the day that job fails the column lies — the
-// same trap as the old membership_periods.left_on.
+// will. Note what it is NOT: whether a member is active, expired or has never
+// joined is DERIVED from memberships, never stored. Storing it would need a
+// nightly job, and the day that job fails the column lies — the same trap as
+// the old membership_periods.left_on.
 //
-//   active / frozen / expired / never   computed, returned on the member
-//                                       response, never a column
-//   suspended                           stored, because a human decided it
+//   active / expired / never   computed, returned on the member response,
+//                              never a column
+//   suspended                  stored, because a human decided it
+//
+// ONE CHECK-IN PER MEMBER PER DAY, enforced by the unique index on
+// (member_id, checked_in_on).
+//
+// checked_in_on is a SEPARATE date column rather than an index on
+// checked_in_at::date, and that is not redundancy. Casting a timestamptz to a
+// date depends on the session TimeZone, so Postgres treats it as STABLE rather
+// than IMMUTABLE and refuses it in an index expression outright. Worse, if it
+// were allowed, a check-in at 01:00 in Addis is 22:00 the PREVIOUS day in UTC,
+// so the gym day and the stored day would disagree for every early morning
+// visit. The application writes the gym's local date explicitly, which also
+// leaves room for a business day that does not start at midnight.
+//
+// A second scan on the same day is NOT an error. Members leave and come back,
+// and a 409 at the desk is a worse answer than none: the endpoint returns the
+// existing row for today. The unique index is the backstop for the race two
+// concurrent scans create, translated from 23505 the same way the phone
+// pre-check is — see the transaction rules in CLAUDE.md.
+//
+// NO SESSION PACKS either. Every plan is unlimited visits for its duration —
+// there is no session_quota and no sessions_used, so a membership is purely a
+// date range. Check-in is therefore one question, "is there a membership
+// covering today", rather than a quota to decrement and a counter to keep in
+// step with check_ins.
+//
+// NO MEMBERSHIP FREEZE, considered and rejected. A freeze solves the recurring
+// contract problem: a gym that auto-bills monthly has to let you skip a month.
+// Membership here is PREPAID, so a member travelling for three weeks simply
+// does not renew and buys again on their return — the same reasoning that kept
+// dunning and proration out of this schema. Commercially it is also a straight
+// loss: service deferred against money already taken.
+//
+// The consequence, deliberate rather than overlooked: memberships.ends_on is
+// set at sale and NEVER moves, so there is no mechanism for a goodwill
+// extension. If that ever becomes a real problem the answer is a permissioned
+// edit of ends_on with an audit entry, not a freeze table.
 //
 // DISABLE vs REVOKE on a login: disabling keeps the password, so re-enabling
 // hands back the credential they already know; revoking deletes the accounts

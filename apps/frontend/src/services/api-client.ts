@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import axios, { type AxiosError, type AxiosRequestConfig } from 'axios';
+import axios, {
+  type AxiosError,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+} from 'axios';
 
 import { toast } from '@/components/ui/toast';
 import { useAuthStore } from '@/features/auth/context/auth-store';
@@ -186,6 +190,23 @@ export default class ApiClient {
     return await axiosInstance
       .post(this.endpoint + url, data, config)
       .then((res) => res.data);
+  }
+
+  /**
+   * A POST whose **status** matters as much as its body.
+   *
+   * `post` returns `res.data`, which is right almost everywhere. It is not
+   * right for an idempotent endpoint, which answers **201** for "created" and
+   * **200** for "you already did this" — with an identical body either way, so
+   * the status is the only thing that tells them apart. Check-in is one: a
+   * repeat scan is not an error and must not read as a second admission.
+   */
+  async postRaw<T = any, D = any>(
+    url = '',
+    data?: D,
+    config: AxiosRequestConfig = {},
+  ): Promise<AxiosResponse<T>> {
+    return await axiosInstance.post<T>(this.endpoint + url, data, config);
   }
 
   async put<T = any, D = any>(

@@ -63,15 +63,9 @@ export function useUserColumns({
               </div>
             ),
           }),
-          columnHelper.accessor('jobTitle', {
-            header: ({ column }) => (
-              <DataTableColumnHeader
-                column={column}
-                title={t('users.columns.jobTitle')}
-              />
-            ),
-            cell: ({ row }) => <span>{row.original.jobTitle}</span>,
-          }),
+          // No job title: this screen answers "what may they reach", and the
+          // roles column below is that answer. What they are employed as is
+          // the Staff roster's business.
           columnHelper.accessor('branchName', {
             id: 'branchName',
             header: ({ column }) => (

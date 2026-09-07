@@ -21,6 +21,18 @@ export const SEED_PERMISSIONS: NewPermission[] = [
     group: 'Attendance',
   },
   { name: 'checkin.list', displayName: 'View check-ins', group: 'Attendance' },
+  {
+    name: 'checkin.override',
+    displayName: 'Admit members without a membership',
+    description:
+      'Let someone train when nothing covers today — expired, not yet ' +
+      'started, or never bought one. The check-in is recorded with no ' +
+      'membership and the override is stamped with who allowed it.\n\n' +
+      'It deliberately does NOT lift a suspension. Being barred from the ' +
+      'premises is a manager’s decision about the person, not a billing ' +
+      'state, and it can only be lifted on the member record itself.',
+    group: 'Attendance',
+  },
 
   // Staff
   { name: 'staff.list', displayName: 'View staff', group: 'Staff' },
@@ -79,6 +91,78 @@ export const SEED_PERMISSIONS: NewPermission[] = [
   { name: 'branch.list', displayName: 'View branches', group: 'Branches' },
   { name: 'branch.create', displayName: 'Create branches', group: 'Branches' },
   { name: 'branch.update', displayName: 'Edit branches', group: 'Branches' },
+
+  // Membership plans — the products the gym sells. No plan.delete, the same
+  // deliberate gap as branch.delete: every membership ever sold points at a
+  // plan, so retiring one is an isActive flip and therefore plan.update.
+  {
+    name: 'plan.list',
+    displayName: 'View membership plans',
+    group: 'Membership plans',
+  },
+  {
+    name: 'plan.create',
+    displayName: 'Create membership plans',
+    group: 'Membership plans',
+  },
+  {
+    name: 'plan.update',
+    displayName: 'Edit and retire membership plans',
+    description:
+      'Also what retiring a plan needs: plans are never deleted, they are ' +
+      'flipped to inactive so sold memberships still resolve.',
+    group: 'Membership plans',
+  },
+
+  // Memberships — the periods of cover sold to members. No update and no
+  // delete, the same deliberate gap as plans: a mistaken sale is voided with
+  // its payment, never edited, so there is nothing for those to gate.
+  {
+    name: 'membership.list',
+    displayName: 'View memberships',
+    description:
+      'See a member’s history of periods sold. Separate from member.read: the ' +
+      'front desk needs the identity of a member without necessarily seeing ' +
+      'what they have paid for.',
+    group: 'Memberships',
+  },
+  {
+    name: 'membership.sell',
+    displayName: 'Sell memberships',
+    description:
+      'Sell a period of cover. The price is snapshotted from the plan, and ' +
+      'the seller is taken from the signed-in user.',
+    group: 'Memberships',
+  },
+
+  // Payments — money received. No payment.update and no payment.delete: a
+  // mistaken payment is voided, which keeps the row and its reason on the
+  // record, so there is nothing for either to gate.
+  {
+    name: 'payment.list',
+    displayName: 'View payments',
+    description:
+      'See payments and the shift total. Includes voided ones — a reversal ' +
+      'is part of what a reconciliation has to add up.',
+    group: 'Payments',
+  },
+  {
+    name: 'payment.record',
+    displayName: 'Record payments',
+    description:
+      'Take money at the desk. The cashier is taken from the signed-in user ' +
+      'and the branch from the member’s home gym.',
+    group: 'Payments',
+  },
+  {
+    name: 'payment.void',
+    displayName: 'Void payments',
+    description:
+      'Reverse a payment taken by mistake. Deliberately separate from ' +
+      'recording one: taking money and unwinding it are different acts, and ' +
+      'the second is the one worth restricting.',
+    group: 'Payments',
+  },
 
   // Job titles — read only. The catalogue is code (job-titles.data.ts), so
   // there is nothing to create or edit through the API.

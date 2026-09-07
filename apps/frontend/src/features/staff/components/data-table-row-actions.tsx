@@ -1,22 +1,13 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Delete02Icon,
-  MoreHorizontalIcon,
   UserUnlock01Icon,
   PencilEdit02Icon,
   ViewIcon,
 } from '@hugeicons/core-free-icons';
 
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { RowActions, type RowAction } from '@/components/table/row-actions';
 import { useCurrentUser } from '@/features/auth/hooks/use-auth';
 import { usePermissions } from '@/features/auth/hooks/use-permissions';
 import { useStaffContext } from '../context/staff-context';
@@ -38,25 +29,6 @@ export function StaffRowActions({
   const { hasPermission } = usePermissions();
   const { data: currentUser } = useCurrentUser();
 
-  const canRead = hasPermission('staff.read');
-  const canUpdate = hasPermission('staff.update');
-  // The API refuses this with a 403; hiding it saves the round trip.
-  const isSelf = currentUser?.id === staffMember.personId;
-  const canTerminate =
-    hasPermission('staff.terminate') &&
-    !isSelf &&
-    staffMember.employmentStatus !== 'terminated';
-
-  // Only for someone who has no login yet — every other credential action
-  // belongs on Users, which can already list them once they do.
-  const canGrantAccess =
-    hasPermission('staff.grantAccess') &&
-    !staffMember.hasAccount &&
-    staffMember.employmentStatus !== 'terminated';
-
-  // Nothing to offer — do not render an empty menu.
-  if (!canRead && !canUpdate && !canGrantAccess && !canTerminate) return null;
-
   const goTo = (to: '/staff/$staffId' | '/staff/$staffId/edit') => () =>
     navigate({ to, params: { staffId: staffMember.personId } });
 
@@ -65,44 +37,78 @@ export function StaffRowActions({
     setOpen(dialog);
   };
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
-        <HugeiconsIcon icon={MoreHorizontalIcon} />
-        <span className="sr-only">{t('actions.rowActions')}</span>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {canRead && (
-          <DropdownMenuItem onClick={goTo('/staff/$staffId')}>
-            <HugeiconsIcon icon={ViewIcon} data-icon="inline-start" />
-            {t('actions.view')}
-          </DropdownMenuItem>
-        )}
-        {canUpdate && (
-          <DropdownMenuItem onClick={goTo('/staff/$staffId/edit')}>
-            <HugeiconsIcon icon={PencilEdit02Icon} data-icon="inline-start" />
-            {t('actions.edit')}
-          </DropdownMenuItem>
-        )}
-        {canGrantAccess && (
-          <DropdownMenuItem onClick={openDialog('grantAccess')}>
-            <HugeiconsIcon icon={UserUnlock01Icon} data-icon="inline-start" />
-            {t('staff.grantAccess.action')}
-          </DropdownMenuItem>
-        )}
-        {canTerminate && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={openDialog('terminate')}
-            >
-              <HugeiconsIcon icon={Delete02Icon} data-icon="inline-start" />
-              {t('staff.actions.terminate')}
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+  const isSelf = currentUser?.id === staffMember.personId;
+  const isTerminated = staffMember.employmentStatus === 'terminated';
+
+  // Permission decides whether an entry exists at all; state only decides
+  // whether it is live. The API refuses both self-termination and a second
+  // login with a 403, so neither is offered as a click that fails — but they
+  // stay on screen, saying why, rather than silently not being there.
+  const terminateReason = isSelf
+    ? t('staff.actions.terminateSelf')
+    : isTerminated
+      ? t('staff.actions.alreadyTerminated')
+      : undefined;
+
+  // Disabled-with-a-reason earns its place only where someone might actually
+  // try. Nobody reaches for "grant access" on a row that already has a login,
+  // and that state never flips back — so most of the roster would carry a
+  // permanently dead button. Hidden there, and shown-but-disabled only for a
+  // terminated employee, where the attempt is plausible and the reason useful.
+  const canGrantAccess =
+    hasPermission('staff.grantAccess') && !staffMember.hasAccount;
+
+  const grantAccessReason = isTerminated
+    ? t('staff.grantAccess.terminated')
+    : undefined;
+
+  const actions: RowAction[] = [
+    ...(hasPermission('staff.read')
+      ? [
+          {
+            key: 'view',
+            label: t('actions.view'),
+            icon: ViewIcon,
+            onSelect: goTo('/staff/$staffId'),
+          },
+        ]
+      : []),
+    ...(hasPermission('staff.update')
+      ? [
+          {
+            key: 'edit',
+            label: t('actions.edit'),
+            icon: PencilEdit02Icon,
+            onSelect: goTo('/staff/$staffId/edit'),
+          },
+        ]
+      : []),
+    ...(canGrantAccess
+      ? [
+          {
+            key: 'grantAccess',
+            label: t('staff.grantAccess.action'),
+            icon: UserUnlock01Icon,
+            disabled: grantAccessReason !== undefined,
+            disabledReason: grantAccessReason,
+            onSelect: openDialog('grantAccess'),
+          },
+        ]
+      : []),
+    ...(hasPermission('staff.terminate')
+      ? [
+          {
+            key: 'terminate',
+            label: t('staff.actions.terminate'),
+            icon: Delete02Icon,
+            destructive: true,
+            disabled: terminateReason !== undefined,
+            disabledReason: terminateReason,
+            onSelect: openDialog('terminate'),
+          },
+        ]
+      : []),
+  ];
+
+  return <RowActions actions={actions} />;
 }

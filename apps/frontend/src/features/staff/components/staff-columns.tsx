@@ -6,8 +6,8 @@ import { DataTableColumnHeader } from '@/components/table/column-header';
 import type { DataTableFeatures } from '@/components/table/data-table-features';
 import { rowNumberColumn } from '@/components/table/row-number-column';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { CopyableText } from '@/components/ui/copy-button';
 import { useCurrentUser } from '@/features/auth/hooks/use-auth';
-import { Badge } from '@/components/ui/badge';
 import type { StaffListItem } from '../data/types';
 import { StaffRowActions } from './data-table-row-actions';
 import { EmploymentStatusBadge } from './employment-status-badge';
@@ -69,10 +69,15 @@ export function useStaffColumns({
                 title={t('staff.columns.phone')}
               />
             ),
+            // Copyable: the roster is where someone goes to find a number and
+            // then paste it somewhere else, and retyping ten digits off a
+            // screen is how the wrong person gets called.
             cell: ({ row }) => (
-              <span className="tabular-nums text-muted-foreground">
-                {row.original.phone}
-              </span>
+              <CopyableText
+                value={row.original.phone}
+                label={t('staff.copyPhone')}
+                className="tabular-nums text-muted-foreground"
+              />
             ),
           }),
           columnHelper.accessor('jobTitle', {
@@ -98,40 +103,9 @@ export function useStaffColumns({
               </span>
             ),
           }),
-          columnHelper.display({
-            id: 'roles',
-            header: () => t('staff.columns.roles'),
-            cell: ({ row }) =>
-              row.original.roles.length === 0 ? (
-                <span className="text-muted-foreground">—</span>
-              ) : (
-                <div className="flex flex-wrap gap-1">
-                  {row.original.roles.map((role) => (
-                    <Badge key={role.id} variant="secondary">
-                      {role.name}
-                    </Badge>
-                  ))}
-                </div>
-              ),
-          }),
-          columnHelper.accessor('hasAccount', {
-            header: ({ column }) => (
-              <DataTableColumnHeader
-                column={column}
-                title={t('staff.columns.access')}
-              />
-            ),
-            // Stated either way, never left blank: no login is a deliberate
-            // fact about a cleaner, not missing data.
-            cell: ({ row }) =>
-              row.original.hasAccount ? (
-                <Badge variant="secondary">{t('staff.access.has')}</Badge>
-              ) : (
-                <Badge variant="outline" className="text-muted-foreground">
-                  {t('staff.access.none')}
-                </Badge>
-              ),
-          }),
+          // No roles and no access column: both answer "what can they reach",
+          // which is the Users screen's question. This one is the roster — who
+          // works here, in what job, at which branch.
           columnHelper.accessor('employmentStatus', {
             header: ({ column }) => (
               <DataTableColumnHeader
@@ -147,12 +121,9 @@ export function useStaffColumns({
             id: 'actions',
             enableHiding: false,
             enableSorting: false,
-            cell: ({ row }) => (
-              // The row itself navigates; the menu must not trigger that too.
-              <div onClick={(event) => event.stopPropagation()}>
-                <StaffRowActions staffMember={row.original} />
-              </div>
-            ),
+            // `RowActions` stops the click reaching the row underneath, which
+            // would otherwise navigate away as the dialog opens.
+            cell: ({ row }) => <StaffRowActions staffMember={row.original} />,
           }),
         ])
         .filter((column) => showBranch || column.id !== 'branchName'),

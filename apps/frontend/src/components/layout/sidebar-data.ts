@@ -1,8 +1,13 @@
 import {
   Building03Icon,
+  Calendar03Icon,
   Home09Icon,
+  Invoice03Icon,
   ShieldKeyIcon,
   ShieldUserIcon,
+  Ticket01Icon,
+  UserCheck01Icon,
+  UserGroupIcon,
   UserIcon,
 } from '@hugeicons/core-free-icons';
 
@@ -13,7 +18,16 @@ type IconType = typeof Home09Icon;
  * template literals, so `t(item.titleKey)` needs the whole key up front.
  */
 type NavTitleKey =
-  'nav.dashboard' | 'nav.staff' | 'nav.users' | 'nav.roles' | 'nav.branches';
+  | 'nav.dashboard'
+  | 'nav.checkIns'
+  | 'nav.attendance'
+  | 'nav.members'
+  | 'nav.payments'
+  | 'nav.membershipPlans'
+  | 'nav.staff'
+  | 'nav.users'
+  | 'nav.roles'
+  | 'nav.branches';
 
 type NavGroupTitleKey = 'nav.groups.overview' | 'nav.groups.admin';
 
@@ -31,9 +45,9 @@ export interface NavGroup {
 }
 
 /**
- * Only routes that exist. Members, check-ins, classes and reports are not
- * built yet — add them back here as each ships, together with their
- * `nav.*` keys and a `requiredPermission`, rather than linking to a 404.
+ * Only routes that exist. Classes and reports are not built yet — add them back
+ * here as each ships, together with their `nav.*` keys and a
+ * `requiredPermission`, rather than linking to a 404.
  *
  * Groups no longer render as headings (the sidebar is a flat list), but they
  * still drive the header breadcrumb — "Admin / Branches".
@@ -46,6 +60,49 @@ export const navGroups: NavGroup[] = [
   {
     titleKey: 'nav.groups.admin',
     items: [
+      // First in the group: this is the screen the desk lives on all day, and
+      // every other admin screen is something you go to occasionally.
+      {
+        titleKey: 'nav.checkIns',
+        url: '/check-ins',
+        icon: UserCheck01Icon,
+        requiredPermission: 'checkin.list',
+      },
+      // Directly after Check-ins, because it is the record that screen
+      // produces: the desk admits people, this answers who came in. Same
+      // permission, opposite direction. `/attendance` shares no segment prefix
+      // with anything else here, so `isNavActive` has nothing to disambiguate.
+      {
+        titleKey: 'nav.attendance',
+        url: '/attendance',
+        icon: Calendar03Icon,
+        requiredPermission: 'checkin.list',
+      },
+      // Above Staff: the roster answers "who works here", but Members is the
+      // screen the front desk actually lives on.
+      {
+        titleKey: 'nav.members',
+        url: '/members',
+        icon: UserGroupIcon,
+        requiredPermission: 'member.list',
+      },
+      // The money half of the same front-desk story, so it follows Members
+      // directly. `isNavActive` matches on segment boundaries, so this cannot
+      // light up for a future `/payment-methods`.
+      {
+        titleKey: 'nav.payments',
+        url: '/payments',
+        icon: Invoice03Icon,
+        requiredPermission: 'payment.list',
+      },
+      // The catalogue a membership is sold from, so it sits beside Members
+      // rather than down with the access-control screens.
+      {
+        titleKey: 'nav.membershipPlans',
+        url: '/membership-plans',
+        icon: Ticket01Icon,
+        requiredPermission: 'plan.list',
+      },
       {
         titleKey: 'nav.staff',
         url: '/staff',

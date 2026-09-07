@@ -53,6 +53,23 @@ async function bootstrap() {
       })
       .addTag('Auth', 'Sign in, token refresh, logout and the current user')
       .addTag('Staff', 'Staff accounts — the only people who can sign in')
+      .addTag('Members', 'Gym members — the people who train here')
+      .addTag(
+        'Membership plans',
+        'The products sold to members — duration and price',
+      )
+      .addTag(
+        'Memberships',
+        'Periods of cover sold to a member — what makes them active today',
+      )
+      .addTag(
+        'Payments',
+        'Money received — recorded, voided, and totalled for a shift',
+      )
+      .addTag(
+        'Check-ins',
+        'The door — who trained today, and who was refused or waved through',
+      )
       .addTag('Branches', 'Gym locations')
       .addTag('Roles', 'Roles and their permission grants')
       .addTag('Permissions', 'The fixed permission catalogue, for role editing')

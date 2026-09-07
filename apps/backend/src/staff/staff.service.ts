@@ -16,6 +16,7 @@ import {
 } from '../common/branch-scope';
 import type { AccountStatus } from '../common/enums';
 import { countOf, paginated, toOffset } from '../common/paginate';
+import { isUniqueViolation } from '../common/pg-errors';
 import type { StaffQueryDto } from './dto/staff-query.dto';
 import type { Database, Transaction } from '../database/database.client';
 import { DRIZZLE } from '../database/database.constants';
@@ -28,17 +29,6 @@ import type {
 import type { CreateStaffDto, UpdateStaffDto } from './dto/staff.dto';
 
 const BCRYPT_ROUNDS = 10;
-
-/**
- * The unique index is the real guard, not the friendly pre-check: two concurrent
- * requests both see "no duplicate" under READ COMMITTED, both insert, and the
- * index rejects the second. Without translating it that surfaces as a raw 500.
- */
-const isUniqueViolation = (error: unknown): boolean =>
-  typeof error === 'object' &&
-  error !== null &&
-  'code' in error &&
-  (error as { code?: string }).code === '23505';
 
 @Injectable()
 export class StaffService {

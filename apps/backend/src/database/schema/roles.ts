@@ -30,10 +30,18 @@ export const roles = pgTable(
       .$onUpdate(() => new Date()),
   },
   (table) => [
-    // Partial: this table soft deletes, so a deleted role must not hold its
-    // name forever.
+    // Two things at once, and both are needed.
+    //
+    // PARTIAL, because this table soft deletes: a deleted role must not hold
+    // its name forever.
+    //
+    // On `lower(name)`, because the service compares names case-insensitively.
+    // A pre-check without a matching index is a TOCTOU race — two concurrent
+    // requests for "Manager" and "manager" both see no duplicate, a
+    // case-sensitive constraint accepts both, and the gym ends up with two
+    // roles the application itself considers the same one.
     uniqueIndex('roles_name_active_uniq')
-      .on(table.name)
+      .on(sql`lower(${table.name})`)
       .where(sql`${table.deletedAt} is null`),
   ],
 );

@@ -64,6 +64,11 @@ interface DataTableProps<
   internalSearch?: boolean;
   /** Placeholder text for the search input */
   searchPlaceholder?: string;
+  /**
+   * Hides the search box. For a list whose endpoint takes no search term — a
+   * visible box that filtered nothing would be worse than none at all.
+   */
+  hideSearch?: boolean;
   /** Faceted filters rendered in the toolbar between search and actions. Selections update tableState[field] and are sent to the backend. */
   filters?: {
     field: string;
@@ -106,6 +111,7 @@ export function DataTable<
   onRowClick,
   internalSearch = false,
   searchPlaceholder = 'Search...',
+  hideSearch = false,
   filters = [],
   children,
   paginationInfo,
@@ -202,24 +208,26 @@ export function DataTable<
       {/* Toolbar: stacked on mobile, row on sm+ */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 flex-wrap items-center gap-2">
-          <div className="relative w-full sm:w-[200px] lg:w-[300px]">
-            <HugeiconsIcon
-              icon={Search01Icon}
-              className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <Input
-              placeholder={searchPlaceholder}
-              value={tableState.search ?? ''}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setTableState((prev) => ({
-                  ...prev,
-                  search: event.target.value,
-                  page: 1,
-                }))
-              }
-              className="pl-9"
-            />
-          </div>
+          {!hideSearch && (
+            <div className="relative w-full sm:w-[200px] lg:w-[300px]">
+              <HugeiconsIcon
+                icon={Search01Icon}
+                className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+              />
+              <Input
+                placeholder={searchPlaceholder}
+                value={tableState.search ?? ''}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setTableState((prev) => ({
+                    ...prev,
+                    search: event.target.value,
+                    page: 1,
+                  }))
+                }
+                className="pl-9"
+              />
+            </div>
+          )}
           {filters.map((filter) => (
             <DataTableFacetedFilter
               key={filter.field}
