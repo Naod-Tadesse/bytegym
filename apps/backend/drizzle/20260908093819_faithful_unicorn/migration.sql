@@ -1,0 +1,2 @@
+ALTER TABLE "sms_settings" ADD COLUMN "reminder_hour" integer DEFAULT 9 NOT NULL;--> statement-breakpoint
+ALTER TABLE "sms_settings" ADD CONSTRAINT "sms_settings_hour_sane" CHECK ("reminder_hour" between 0 and 23);

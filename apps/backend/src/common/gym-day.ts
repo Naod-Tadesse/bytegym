@@ -65,6 +65,22 @@ export const gymToday = (): string =>
 export const GYM_TODAY_SQL = sql`(now() at time zone ${GYM_TIME_ZONE}::text)::date`;
 
 /**
+ * The hour of the day, 0–23, as the gym reckons it.
+ *
+ * The same trap as `gymToday`: the server runs in UTC and Addis is UTC+3, so
+ * `new Date().getHours()` is three hours behind the gym. A job that fires "at
+ * nine" on the server's clock texts members at six in the morning.
+ */
+export const gymHour = (): number =>
+  Number(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: GYM_TIME_ZONE,
+      hour: '2-digit',
+      hour12: false,
+    }).format(new Date()),
+  );
+
+/**
  * `iso` shifted by whole days, still date-only.
  *
  * Built on `Date.UTC` so it is pure calendar arithmetic: a local-time `Date`

@@ -133,6 +133,31 @@ export class PaymentsService {
       await this.membershipsService.findOne(query.membershipId, scope);
       conditions.push(eq(schema.payments.membershipId, query.membershipId));
     }
+    if (query.planId) {
+      // EXISTS rather than a join, so the count-and-total query below stays a
+      // single scan of `payments`. A payment has no plan of its own — it is the
+      // plan of the membership it settles, which is why this reaches through.
+      conditions.push(sql`exists (
+        select 1 from ${schema.memberships} m
+        where m.id = ${schema.payments.membershipId}
+          and m.plan_id = ${query.planId})`);
+    }
+    if (query.method) {
+      conditions.push(eq(schema.payments.method, query.method));
+    }
+    if (query.search) {
+      // Same reach-through, and the same reason. A payment carries no text of
+      // its own, so a search is a search of the person who made it.
+      const term = `%${query.search}%`;
+      conditions.push(sql`exists (
+        select 1 from ${schema.person} p
+        join ${schema.member} mb on mb.person_id = p.id
+        where p.id = ${schema.payments.memberId}
+          and (p.first_name ilike ${term}
+            or p.last_name ilike ${term}
+            or p.phone ilike ${term}
+            or mb.member_code ilike ${term}))`);
+    }
     // Inclusive both ends, and both in the gym's own day — see receivedOn.
     if (query.from) {
       conditions.push(sql`${receivedOn} >= ${query.from}`);
@@ -150,8 +175,9 @@ export class PaymentsService {
         // Newest first. The id breaks ties so paging stays deterministic when
         // two payments land in the same millisecond.
         .orderBy(desc(schema.payments.receivedAt), desc(schema.payments.id)),
-      // No joins: every condition above is on `payments` alone, so the count
-      // and the total can be one extra scan rather than a repeat of the query.
+      // Still no joins: `planId` and `search` reach through EXISTS rather than
+      // widening the FROM, so the count and the total stay one extra scan of
+      // `payments` rather than a repeat of the whole query.
       this.db
         .select({
           count: sql<number>`count(*)`,

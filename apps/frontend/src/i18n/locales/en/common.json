@@ -164,8 +164,7 @@
       "emergencyContactPhone": "Emergency contact phone",
       "joined": "Joined",
       "plan": "Plan",
-      "isComplimentary": "Complimentary",
-      "isComplimentaryHint": "Nothing is owed for this membership. It still runs for the same dates and still blocks a second membership over them."
+      "isComplimentary": "Complimentary"
     },
     "placeholders": {
       "pickDate": "Pick a date",
@@ -195,25 +194,23 @@
     "sellMembership": {
       "title": "Sell a membership",
       "membershipTitle": "Membership",
-      "membershipSubtitle": "The end date comes from the plan's duration and the price is recorded as it stands today, so a later price change does not restate this sale.",
       "paymentTitle": "Payment",
-      "paymentSubtitle": "Selling and taking the money are one act at the desk, so both are recorded together.",
       "pickPlanFirst": "Choose a plan to see what is due.",
       "planPrice": "Plan price",
       "registrationFee": "Registration fee",
-      "registrationFeeHint": "Charged once, because this is their first membership. A renewal is the plan price alone.",
       "amountDue": "Amount due",
       "takePaymentNow": "Payment taken now",
-      "takePaymentNowHint": "Records the full amount due against this sale. Turn it off to sell on account and take the money later — the membership starts owing the whole balance.",
+      "confirmTitle": "Sell this membership?",
       "confirm": "Sell membership",
       "activeUntil": "Active until {{date}}",
       "blockedTitle": "Already has one",
-      "blockedBody": "{{name}} has an active membership running to {{date}}. The gym sells one membership at a time, so sell again once that has run out.",
+      "blockedBody": "{{name}} has an active membership running to {{date}}.",
       "backToMember": "Back to member"
     },
     "create": {
       "title": "New member",
-      "subtitle": "Register someone at the front desk — you can sell them a membership next"
+      "subtitle": "Register someone at the front desk — you can sell them a membership next",
+      "confirmTitle": "Create this member?"
     },
     "edit": {
       "title": "Edit member"
@@ -243,7 +240,8 @@
       "record": "Record payment",
       "void": "Void payment",
       "openMember": "Open member",
-      "alreadyVoided": "This payment is already voided"
+      "alreadyVoided": "This payment is already voided",
+      "search": "Search by member name, phone or code…"
     },
     "columns": {
       "date": "Date",
@@ -268,13 +266,13 @@
     },
     "fields": {
       "amount": "Amount (ETB)",
-      "method": "How it was paid",
+      "method": "Payment method",
       "reference": "Reference",
       "reason": "Why it is being voided"
     },
     "placeholders": {
       "amount": "800.00",
-      "method": "Select how it was paid",
+      "method": "Select a payment method",
       "reference": "Transaction or receipt number",
       "reason": "Entered twice by mistake"
     },
@@ -293,6 +291,10 @@
       "subtitle": "{{total}} received from this member. Voided payments are listed but not counted.",
       "empty": "No payments recorded for this member yet.",
       "showMore": "Show more ({{shown}} of {{total}})"
+    },
+    "filters": {
+      "plan": "Plan",
+      "method": "Method"
     }
   },
   "plans": {
@@ -325,9 +327,7 @@
       "durationDays": "Duration in days",
       "price": "Price (ETB)",
       "registrationFee": "Registration fee (ETB)",
-      "registrationFeeHint": "A one-off joining fee, added to this plan's price only when the buyer has never held a membership. Leave it at 0 for a plan that charges none.",
-      "isActive": "On sale",
-      "isActiveHint": "Retiring a plan only stops it being sold. Memberships already on it keep running to their end date, and the plan stays on every record that names it."
+      "isActive": "On sale"
     },
     "placeholders": {
       "name": "Monthly",
@@ -619,6 +619,80 @@
     "branches": "Branches",
     "profile": "Profile",
     "logOut": "Log out",
-    "userMenu": "Open user menu"
+    "userMenu": "Open user menu",
+    "sms": "SMS"
+  },
+  "sms": {
+    "title": "SMS",
+    "subtitle": "Message members, one at a time or all at once",
+    "notAMember": "Not a member",
+    "length": "{{used}}/{{max}} characters",
+    "parts_one": "{{count}} message",
+    "parts_other": "{{count}} messages",
+    "actions": {
+      "search": "Search by number or message…"
+    },
+    "columns": {
+      "when": "When",
+      "to": "To",
+      "message": "Message",
+      "kind": "Type",
+      "status": "Status"
+    },
+    "fields": {
+      "phone": "Phone number",
+      "message": "Message",
+      "audience": "Send to",
+      "plan": "Plan",
+      "reminderEnabled": "Remind members before their membership ends",
+      "reminderDaysBefore": "Start this many days before",
+      "reminderTemplate": "Reminder text",
+      "reminderHour": "Send at"
+    },
+    "placeholders": {
+      "message": "Happy new year from all of us at the gym!",
+      "broadcast": "Hi {{name}}, the gym is closed on Monday."
+    },
+    "audience": {
+      "all": "All members",
+      "plan": "Members on one plan"
+    },
+    "kind": {
+      "direct": "Direct",
+      "bulk": "Bulk",
+      "reminder": "Reminder"
+    },
+    "status": {
+      "sent": "Sent",
+      "held": "Held back",
+      "failed": "Failed"
+    },
+    "send": {
+      "title": "Send a message",
+      "subtitle": "One number. It does not have to belong to a member.",
+      "confirm": "Send",
+      "confirmTitle": "Send this message?"
+    },
+    "broadcast": {
+      "title": "Send to many",
+      "subtitle": "The same message to every member, or everyone on one plan.",
+      "nameHint": "{{name}} becomes each member's first name.",
+      "review": "Review recipients",
+      "confirm": "Send now",
+      "confirmTitle_one": "Send to {{count}} member?",
+      "confirmTitle_other": "Send to {{count}} members?"
+    },
+    "reminders": {
+      "title": "Automatic reminders",
+      "subtitle": "One message a day per member, from the day you choose until their membership ends.",
+      "cost_one": "{{count}} message per expiring member",
+      "cost_other": "Up to {{count}} messages per expiring member",
+      "placeholders": "{{name}}, {{days}} and {{date}} are filled in for each member.",
+      "runNow": "Run now",
+      "hourHint": "Gym time. A restart delays the run, it does not skip the day.",
+      "saveFirst": "Save your changes before running it.",
+      "offHint": "Turn reminders on to run them."
+    },
+    "copyPhone": "Copy number"
   }
 }

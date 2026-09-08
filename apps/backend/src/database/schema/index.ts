@@ -8,6 +8,7 @@ export * from './membership-plans';
 export * from './memberships';
 export * from './payments';
 export * from './check-ins';
+export * from './sms';
 export * from './roles';
 export * from './permissions';
 export * from './role-permissions';

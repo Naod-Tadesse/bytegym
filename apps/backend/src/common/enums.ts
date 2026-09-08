@@ -4,6 +4,8 @@ import {
   employmentStatus,
   genderType,
   paymentMethod,
+  smsKind,
+  smsStatus,
 } from '../database/schema';
 
 /**
@@ -20,6 +22,8 @@ export const ACCOUNT_STATUSES = accountStatus.enumValues;
 export const EMPLOYMENT_STATUSES = employmentStatus.enumValues;
 export const DATA_SCOPES = dataScope.enumValues;
 export const PAYMENT_METHODS = paymentMethod.enumValues;
+export const SMS_KINDS = smsKind.enumValues;
+export const SMS_STATUSES = smsStatus.enumValues;
 
 /**
  * The one set here that is NOT a pgEnum, deliberately: whether a member is
@@ -67,6 +71,8 @@ export const DATA_SCOPE_ENUM_NAME = 'DataScope';
 export const MEMBERSHIP_STATUS_ENUM_NAME = 'MembershipStatus';
 export const CHECKIN_REFUSAL_REASON_ENUM_NAME = 'CheckInRefusalReason';
 export const PAYMENT_METHOD_ENUM_NAME = 'PaymentMethod';
+export const SMS_KIND_ENUM_NAME = 'SmsKind';
+export const SMS_STATUS_ENUM_NAME = 'SmsStatus';
 
 export type Gender = (typeof GENDERS)[number];
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
@@ -75,3 +81,5 @@ export type DataScope = (typeof DATA_SCOPES)[number];
 export type MembershipStatus = (typeof MEMBERSHIP_STATUSES)[number];
 export type CheckInRefusalReason = (typeof CHECKIN_REFUSAL_REASONS)[number];
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+export type SmsKind = (typeof SMS_KINDS)[number];
+export type SmsStatus = (typeof SMS_STATUSES)[number];

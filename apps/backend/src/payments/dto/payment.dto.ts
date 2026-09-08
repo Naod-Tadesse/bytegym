@@ -134,6 +134,13 @@ export class VoidPaymentDto {
  * whose member does not match instead.
  */
 export class PaymentQueryDto extends PaginationDto {
+  /**
+   * `search` is inherited from PaginationDto and **is** honoured here: it
+   * matches the payer's first name, last name, phone or member code. A payment
+   * carries no text of its own, so searching one means searching the person it
+   * came from — which is what "find Kasimir's payments" means at the desk.
+   */
+
   @ApiPropertyOptional({
     type: String,
     format: 'uuid',
@@ -165,6 +172,32 @@ export class PaymentQueryDto extends PaginationDto {
   @IsOptional()
   @IsUUID()
   branchId?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'uuid',
+    description:
+      'Only money taken against memberships on this plan. Resolved through ' +
+      'the payment’s membership — a payment has no plan of its own, and the ' +
+      'membership’s plan is the one that was sold.',
+  })
+  @IsOptional()
+  @IsUUID()
+  planId?: string;
+
+  @ApiPropertyOptional({
+    enum: [...PAYMENT_METHODS],
+    enumName: PAYMENT_METHOD_ENUM_NAME,
+    description:
+      'Only payments taken this way — what a cashier reconciling cash ' +
+      'against Telebirr separately actually needs.',
+  })
+  @IsOptional()
+  // `IsIn`, not `IsEnum`: IsEnum cannot enumerate a const array, so its
+  // rejection message comes out as "must be one of the following values: "
+  // with nothing after the colon. Same idiom as every other enum here.
+  @IsIn([...PAYMENT_METHODS])
+  method?: PaymentMethod;
 
   @ApiPropertyOptional({
     type: String,

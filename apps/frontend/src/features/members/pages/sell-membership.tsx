@@ -11,6 +11,7 @@ import {
 } from '@/components/form-fields';
 import { FormPageHeader } from '@/components/form-page-header';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   Card,
   CardContent,
@@ -29,7 +30,11 @@ import { addAmounts, formatBirr, formatDate, isZeroAmount } from '@/lib/format';
 import { settle } from '@/lib/settle';
 import { cn } from '@/lib/utils';
 import { hasLiveMembership } from '../data/membership-state';
-import { orUndefined, sellMembershipSchema } from '../data/schema';
+import {
+  orUndefined,
+  sellMembershipSchema,
+  type SellMembershipFormData,
+} from '../data/schema';
 import type { MemberDetail } from '../data/types';
 import { useMember } from '../hooks/use-members';
 import { useSellMembership } from '../hooks/use-memberships';
@@ -113,8 +118,8 @@ function AlreadyCovered({ member }: { member: MemberDetail }) {
           <CardDescription>
             {t('members.sellMembership.blockedBody', {
               name: `${member.firstName} ${member.lastName}`,
-              // Never null here: cover that has not run out means a membership
-              // exists, and `expiresOn` is the furthest `endsOn` of one.
+              // Never null here: an active membership is one that exists, and
+              // `expiresOn` is the furthest `endsOn` of one.
               date: formatDate(member.expiresOn ?? ''),
             })}
           </CardDescription>
@@ -179,6 +184,13 @@ function SellMembershipForm({ member }: { member: MemberDetail }) {
    */
   const canTakePayment = hasPermission('payment.record');
 
+  /**
+   * The submitted, validated values waiting on a yes — `undefined` when the
+   * dialog is closed. Held rather than re-read from the form on confirm, so
+   * what is agreed to is exactly what is sent.
+   */
+  const [confirming, setConfirming] = useState<SellMembershipFormData>();
+
   const form = useForm({
     defaultValues: {
       planId: '',
@@ -192,36 +204,44 @@ function SellMembershipForm({ member }: { member: MemberDetail }) {
       reference: '',
     },
     validators: { onSubmit: sellMembershipSchema },
-    onSubmit: async ({ value }) => {
-      // Settled, not rethrown: an overlapping sale comes back 409 and the
-      // interceptor has already toasted it. Rethrowing would leave an
-      // unhandled rejection, and the dates need correcting here — so the page
-      // stays put and only `onSuccess` navigates away.
-      await settle(
-        sellMembershipAsync({
-          memberId: member.personId,
-          planId: value.planId,
-          // No start date: a membership begins the day it is sold, and the
-          // server takes the gym's today rather than the browser's.
-          isComplimentary: value.isComplimentary,
-          // Omitted for a comped sale and for a plan that costs nothing — the
-          // API 400s on a payment against either — and omitted when nothing was
-          // handed over, which is how "800 now, the rest on Friday" begins.
-          // No amount: the server charges the full figure it computed.
-          ...(value.takePaymentNow &&
-          !value.isComplimentary &&
-          !costsNothing(planById.get(value.planId), isFirstMembership)
-            ? {
-                payment: {
-                  method: value.method,
-                  reference: orUndefined(value.reference),
-                },
-              }
-            : {}),
-        }),
-      );
-    },
+    // Validation runs first, so the confirmation only ever appears over a form
+    // that would actually go through — asking "are you sure" and then showing
+    // a required-field error would be the wrong order.
+    onSubmit: ({ value }) => setConfirming(value),
   });
+
+  /**
+   * The sale, once it has been confirmed.
+   *
+   * Settled, not rethrown: an overlapping sale comes back 409 and the
+   * interceptor has already toasted it. Rethrowing would leave an unhandled
+   * rejection, and the form needs correcting here — so the page stays put and
+   * only `onSuccess` navigates away.
+   */
+  const sell = (value: SellMembershipFormData) =>
+    settle(
+      sellMembershipAsync({
+        memberId: member.personId,
+        planId: value.planId,
+        // No start date: a membership begins the day it is sold, and the
+        // server takes the gym's today rather than the browser's.
+        isComplimentary: value.isComplimentary,
+        // Omitted for a comped sale and for a plan that costs nothing — the
+        // API 400s on a payment against either — and omitted when nothing was
+        // handed over, which is how "800 now, the rest on Friday" begins.
+        // No amount: the server charges the full figure it computed.
+        ...(value.takePaymentNow &&
+        !value.isComplimentary &&
+        !costsNothing(planById.get(value.planId), isFirstMembership)
+          ? {
+              payment: {
+                method: value.method,
+                reference: orUndefined(value.reference),
+              },
+            }
+          : {}),
+      }),
+    );
 
   // Read from the store rather than held alongside it, so there is one answer,
   // not two that can drift.
@@ -240,6 +260,25 @@ function SellMembershipForm({ member }: { member: MemberDetail }) {
   // render — it never guesses a price.
   const plan = planById.get(planId);
   const hasNothingToPay = costsNothing(plan, isFirstMembership);
+
+  /**
+   * The sale in one line: who, which plan, how much.
+   *
+   * Assembled from parts and joined rather than interpolated into a sentence,
+   * so a plan that is not on a loaded page drops out instead of leaving a gap
+   * with punctuation around it.
+   */
+  const summarise = (value: SellMembershipFormData) => {
+    const chosen = planById.get(value.planId);
+    const amount = value.isComplimentary
+      ? t('members.fields.isComplimentary')
+      : chosen &&
+        formatBirr(addAmounts(chosen.price, feeFor(chosen, isFirstMembership)));
+
+    return [`${member.firstName} ${member.lastName}`, chosen?.name, amount]
+      .filter(Boolean)
+      .join(' · ');
+  };
 
   return (
     <form
@@ -266,9 +305,6 @@ function SellMembershipForm({ member }: { member: MemberDetail }) {
       <Card>
         <CardHeader>
           <CardTitle>{t('members.sellMembership.membershipTitle')}</CardTitle>
-          <CardDescription>
-            {t('members.sellMembership.membershipSubtitle')}
-          </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormComboboxField
@@ -288,7 +324,6 @@ function SellMembershipForm({ member }: { member: MemberDetail }) {
             form={form}
             name="isComplimentary"
             label={t('members.fields.isComplimentary')}
-            description={t('members.fields.isComplimentaryHint')}
             className="sm:col-span-2"
           />
         </CardContent>
@@ -301,9 +336,6 @@ function SellMembershipForm({ member }: { member: MemberDetail }) {
         <Card>
           <CardHeader>
             <CardTitle>{t('members.sellMembership.paymentTitle')}</CardTitle>
-            <CardDescription>
-              {t('members.sellMembership.paymentSubtitle')}
-            </CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {plan ? (
@@ -331,7 +363,6 @@ function SellMembershipForm({ member }: { member: MemberDetail }) {
                   form={form}
                   name="takePaymentNow"
                   label={t('members.sellMembership.takePaymentNow')}
-                  description={t('members.sellMembership.takePaymentNowHint')}
                   className="sm:col-span-2"
                 />
                 {takePaymentNow && (
@@ -357,6 +388,22 @@ function SellMembershipForm({ member }: { member: MemberDetail }) {
           </CardContent>
         </Card>
       )}
+
+      {/* A sale takes money and cannot be edited afterwards, so it is worth one
+          deliberate yes. The summary is the sale in one line — who, which
+          plan, how much — because that is what is being agreed to. */}
+      <ConfirmDialog
+        open={!!confirming}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setConfirming(undefined);
+        }}
+        title={t('members.sellMembership.confirmTitle')}
+        description={confirming && summarise(confirming)}
+        confirmLabel={t('members.sellMembership.confirm')}
+        cancelLabel={t('actions.cancel')}
+        isPending={isPending}
+        onConfirm={() => confirming && sell(confirming)}
+      />
     </form>
   );
 }
@@ -409,11 +456,6 @@ function AmountBreakdown({
           {formatBirr(addAmounts(price, registrationFee))}
         </span>
       </div>
-      {hasRegistrationFee && (
-        <p className="text-xs text-muted-foreground">
-          {t('members.sellMembership.registrationFeeHint')}
-        </p>
-      )}
     </div>
   );
 }

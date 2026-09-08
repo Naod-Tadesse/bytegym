@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   useInfiniteQuery,
   useMutation,
@@ -6,6 +6,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 
 import { toast } from '@/components/ui/toast';
 import { formatBirr } from '@/lib/format';
@@ -72,6 +73,58 @@ const OPTIONS_PAGE_SIZE = 20;
  * only `{value,label}`, and the sale dialog has to show a price breakdown for
  * whichever plan is picked.
  */
+/**
+ * Every plan there has ever been, for filtering a list of history.
+ *
+ * Deliberately **not** `usePlanOptions`: that one filters to `isActive`,
+ * because it feeds the sell form and a retired plan cannot be sold. A payment
+ * taken three months ago may well be against a plan since withdrawn, and a
+ * filter that omitted it would quietly report the gym earned nothing on it.
+ *
+ * Pages are pulled until there are none left rather than one oversized request:
+ * the faceted filter renders a flat list with no paging of its own, so a plan
+ * beyond the first page would simply not be selectable — the same silent drop
+ * the combobox rule exists to prevent. A gym has a handful of plans, so in
+ * practice this is one request.
+ */
+export function useAllPlanOptions() {
+  const { t } = useTranslation();
+
+  const query = useInfiniteQuery({
+    queryKey: ['membership-plans', 'all-options'],
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) =>
+      apiClient.get<PaginatedResponse<MembershipPlan>>('', {
+        params: { page: pageParam, limit: OPTIONS_PAGE_SIZE },
+      }),
+    getNextPageParam: (lastPage) =>
+      lastPage.meta.page < lastPage.meta.totalPages
+        ? lastPage.meta.page + 1
+        : undefined,
+  });
+
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
+
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  return useMemo(
+    () =>
+      (query.data?.pages ?? [])
+        .flatMap((page) => page.data)
+        // Retired plans are listed and marked, not hidden: they are exactly
+        // the ones whose history someone is looking back at.
+        .map((plan) => ({
+          label: plan.isActive
+            ? plan.name
+            : `${plan.name} (${t('plans.status.retired')})`,
+          value: plan.id,
+        })),
+    [query.data, t],
+  );
+}
+
 export function usePlanOptions(search?: string) {
   const query = useInfiniteQuery({
     queryKey: ['membership-plans', 'options', search ?? ''],

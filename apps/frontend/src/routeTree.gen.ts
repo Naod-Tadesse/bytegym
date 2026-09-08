@@ -21,6 +21,7 @@ import { Route as MembershipPlansIndexRouteImport } from './routes/membership-pl
 import { Route as MembershipPlansNewRouteImport } from './routes/membership-plans/new'
 import { Route as PaymentsIndexRouteImport } from './routes/payments/index'
 import { Route as RolesIndexRouteImport } from './routes/roles/index'
+import { Route as SmsIndexRouteImport } from './routes/sms/index'
 import { Route as StaffIndexRouteImport } from './routes/staff/index'
 import { Route as StaffNewRouteImport } from './routes/staff/new'
 import { Route as UsersIndexRouteImport } from './routes/users/index'
@@ -91,6 +92,11 @@ const PaymentsIndexRoute = PaymentsIndexRouteImport.update({
 const RolesIndexRoute = RolesIndexRouteImport.update({
   id: '/roles/',
   path: '/roles/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SmsIndexRoute = SmsIndexRouteImport.update({
+  id: '/sms/',
+  path: '/sms/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StaffIndexRoute = StaffIndexRouteImport.update({
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/membership-plans/': typeof MembershipPlansIndexRoute
   '/payments/': typeof PaymentsIndexRoute
   '/roles/': typeof RolesIndexRoute
+  '/sms/': typeof SmsIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/users/': typeof UsersIndexRoute
   '/branches/$branchId/edit': typeof BranchesBranchIdEditRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/membership-plans': typeof MembershipPlansIndexRoute
   '/payments': typeof PaymentsIndexRoute
   '/roles': typeof RolesIndexRoute
+  '/sms': typeof SmsIndexRoute
   '/staff': typeof StaffIndexRoute
   '/users': typeof UsersIndexRoute
   '/branches/$branchId/edit': typeof BranchesBranchIdEditRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/membership-plans/': typeof MembershipPlansIndexRoute
   '/payments/': typeof PaymentsIndexRoute
   '/roles/': typeof RolesIndexRoute
+  '/sms/': typeof SmsIndexRoute
   '/staff/': typeof StaffIndexRoute
   '/users/': typeof UsersIndexRoute
   '/branches/$branchId/edit': typeof BranchesBranchIdEditRoute
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/membership-plans/'
     | '/payments/'
     | '/roles/'
+    | '/sms/'
     | '/staff/'
     | '/users/'
     | '/branches/$branchId/edit'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/membership-plans'
     | '/payments'
     | '/roles'
+    | '/sms'
     | '/staff'
     | '/users'
     | '/branches/$branchId/edit'
@@ -292,6 +303,7 @@ export interface FileRouteTypes {
     | '/membership-plans/'
     | '/payments/'
     | '/roles/'
+    | '/sms/'
     | '/staff/'
     | '/users/'
     | '/branches/$branchId/edit'
@@ -318,6 +330,7 @@ export interface RootRouteChildren {
   MembershipPlansIndexRoute: typeof MembershipPlansIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
   RolesIndexRoute: typeof RolesIndexRoute
+  SmsIndexRoute: typeof SmsIndexRoute
   StaffIndexRoute: typeof StaffIndexRoute
   UsersIndexRoute: typeof UsersIndexRoute
   BranchesBranchIdEditRoute: typeof BranchesBranchIdEditRoute
@@ -416,6 +429,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RolesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sms/': {
+      id: '/sms/'
+      path: '/sms'
+      fullPath: '/sms/'
+      preLoaderRoute: typeof SmsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/staff/': {
       id: '/staff/'
       path: '/staff'
@@ -510,6 +530,7 @@ const rootRouteChildren: RootRouteChildren = {
   MembershipPlansIndexRoute: MembershipPlansIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
   RolesIndexRoute: RolesIndexRoute,
+  SmsIndexRoute: SmsIndexRoute,
   StaffIndexRoute: StaffIndexRoute,
   UsersIndexRoute: UsersIndexRoute,
   BranchesBranchIdEditRoute: BranchesBranchIdEditRoute,

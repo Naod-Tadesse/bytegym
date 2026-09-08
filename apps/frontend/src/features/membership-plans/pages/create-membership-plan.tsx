@@ -99,11 +99,6 @@ export function CreateMembershipPlan() {
             placeholder="900.00"
             inputMode="decimal"
           />
-          {/* Which sale it lands on is not a property of the plan — the sale
-              decides it from whether the member has ever held a membership. */}
-          <p className="text-sm text-muted-foreground sm:col-span-2">
-            {t('plans.fields.registrationFeeHint')}
-          </p>
           <FormTextareaField
             form={form}
             name="description"

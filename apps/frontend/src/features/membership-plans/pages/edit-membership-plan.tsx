@@ -130,11 +130,6 @@ function EditMembershipPlanForm({ plan }: { plan: MembershipPlan }) {
           <p className="text-sm text-muted-foreground sm:col-span-2">
             {t('plans.edit.priceHint')}
           </p>
-          {/* Which sale it lands on is not a property of the plan — the sale
-              decides it from whether the member has ever held a membership. */}
-          <p className="text-sm text-muted-foreground sm:col-span-2">
-            {t('plans.fields.registrationFeeHint')}
-          </p>
           <FormTextareaField
             form={form}
             name="description"
@@ -146,7 +141,6 @@ function EditMembershipPlanForm({ plan }: { plan: MembershipPlan }) {
             form={form}
             name="isActive"
             label={t('plans.fields.isActive')}
-            description={t('plans.fields.isActiveHint')}
             className="sm:col-span-2"
           />
         </CardContent>

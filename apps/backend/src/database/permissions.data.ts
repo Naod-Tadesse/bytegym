@@ -177,4 +177,39 @@ export const SEED_PERMISSIONS: NewPermission[] = [
 
   // Reporting
   { name: 'report.view', displayName: 'View reports', group: 'Reporting' },
+
+  // Messaging. Three permissions rather than one, because they are three
+  // different sizes of mistake: a wrong number costs one message, a wrong bulk
+  // send costs one per member and reaches all of them, and a wrong reminder
+  // setting quietly texts every expiring member every day until someone
+  // notices the bill.
+  {
+    name: 'sms.send',
+    displayName: 'Send a message',
+    description: 'Text one number — a member, or anybody else.',
+    group: 'Messaging',
+  },
+  {
+    name: 'sms.broadcast',
+    displayName: 'Send to many',
+    description:
+      'Text every member, or every member on one plan. Separate from ' +
+      'sms.send because the cost and the reach are of a different order.',
+    group: 'Messaging',
+  },
+  {
+    name: 'sms.settings',
+    displayName: 'Manage automatic reminders',
+    description:
+      'Turn expiry reminders on or off and set how many days ahead they ' +
+      'start. Nobody presses send for these, which is why they are gated ' +
+      'apart from the two above.',
+    group: 'Messaging',
+  },
+  {
+    name: 'sms.list',
+    displayName: 'View message history',
+    description: 'Read what has been sent, to whom, and whether it arrived.',
+    group: 'Messaging',
+  },
 ];

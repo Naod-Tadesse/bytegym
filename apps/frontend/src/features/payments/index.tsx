@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 
 import { ListPage } from '@/components/list-page';
 import { DataTable } from '@/components/table/data-table';
+import { useAllPlanOptions } from '@/features/membership-plans/hooks/use-membership-plans';
 import { formatBirr } from '@/lib/format';
+import { usePaymentMethodOptions } from './components/payment-badges';
 import { usePaymentColumns } from './components/payment-columns';
 import { DateRangeFilter } from './components/date-range-filter';
 import { PaymentProvider } from './context/payment-context';
@@ -19,6 +21,11 @@ function PaymentsContent() {
     limit: 10,
   });
   const columns = usePaymentColumns(tableState);
+
+  // A closed enum written in code, so a plain option list is right.
+  const methodOptions = usePaymentMethodOptions();
+  // Every plan, retired ones included — see useAllPlanOptions.
+  const planOptions = useAllPlanOptions();
 
   const { payments, totalReceived, isLoading, paginationInfo } =
     usePayments(tableState);
@@ -45,10 +52,21 @@ function PaymentsContent() {
           setTableState={setTableState}
           isLoading={isLoading}
           paginationInfo={paginationInfo}
-          // The endpoint filters by member, membership, branch and date — it
-          // takes no search term, so the box is hidden rather than offered as
-          // a control that quietly does nothing.
-          hideSearch
+          // A payment carries no text of its own, so the term matches the
+          // person who made it — name, phone or member code.
+          searchPlaceholder={t('payments.actions.search')}
+          filters={[
+            {
+              field: 'planId',
+              title: t('payments.filters.plan'),
+              options: planOptions,
+            },
+            {
+              field: 'method',
+              title: t('payments.filters.method'),
+              options: methodOptions,
+            },
+          ]}
         >
           <DateRangeFilter
             value={{ from: tableState.from, to: tableState.to }}

@@ -181,7 +181,11 @@ export function useCreateMember() {
     },
   });
 
-  return { createMember: mutation.mutate, isPending: mutation.isPending };
+  // `mutateAsync`, because registration now runs behind a ConfirmDialog and
+  // the dialog awaits this before closing — that is what keeps its spinner up
+  // for the length of the request. `settle()` at the call site swallows the
+  // rejection the interceptor has already toasted.
+  return { createMember: mutation.mutateAsync, isPending: mutation.isPending };
 }
 
 export function useUpdateMember() {

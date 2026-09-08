@@ -3,6 +3,7 @@ import {
   Calendar03Icon,
   Home09Icon,
   Invoice03Icon,
+  Message01Icon,
   ShieldKeyIcon,
   ShieldUserIcon,
   Ticket01Icon,
@@ -24,6 +25,7 @@ type NavTitleKey =
   | 'nav.members'
   | 'nav.payments'
   | 'nav.membershipPlans'
+  | 'nav.sms'
   | 'nav.staff'
   | 'nav.users'
   | 'nav.roles'
@@ -102,6 +104,16 @@ export const navGroups: NavGroup[] = [
         url: '/membership-plans',
         icon: Ticket01Icon,
         requiredPermission: 'plan.list',
+      },
+      // After the front-desk screens and before the admin ones: messaging is
+      // something the desk does about members, not a settings page. Gated on
+      // sms.list, the weakest of the four — the page's cards gate themselves,
+      // so somebody who may only read the log still has a screen worth opening.
+      {
+        titleKey: 'nav.sms',
+        url: '/sms',
+        icon: Message01Icon,
+        requiredPermission: 'sms.list',
       },
       {
         titleKey: 'nav.staff',

@@ -86,4 +86,8 @@ export interface PaymentTableState extends TableState {
   to?: string;
   memberId?: string;
   membershipId?: string;
+  /** The plan the settled membership was sold on. */
+  planId?: string;
+  /** How it was paid. A single value — `TableState.search` carries the text. */
+  method?: PaymentMethod;
 }

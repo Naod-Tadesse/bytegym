@@ -65,6 +65,11 @@ export function usePayments(tableState: PaymentTableState) {
           ...(tableState.membershipId
             ? { membershipId: tableState.membershipId }
             : {}),
+          ...(tableState.planId ? { planId: tableState.planId } : {}),
+          ...(tableState.method ? { method: tableState.method } : {}),
+          // Matches the payer's name, phone or member code — a payment has no
+          // text of its own.
+          ...(tableState.search ? { search: tableState.search } : {}),
         },
       }),
   });

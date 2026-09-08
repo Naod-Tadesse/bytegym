@@ -11,13 +11,19 @@ import {
 } from '@/components/form-fields';
 import { FormPageHeader } from '@/components/form-page-header';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { useCurrentUser } from '@/features/auth/hooks/use-auth';
 import { useBranchOptions } from '@/features/branches/hooks/use-branches';
 import { useGenderOptions } from '@/features/staff/hooks/use-gender-options';
 import { useDebounce } from '@/hooks/use-debounce';
-import { createMemberSchema, orUndefined } from '../data/schema';
+import { settle } from '@/lib/settle';
+import {
+  createMemberSchema,
+  orUndefined,
+  type CreateMemberFormData,
+} from '../data/schema';
 import { useCreateMember } from '../hooks/use-members';
 
 export function CreateMember() {
@@ -46,6 +52,13 @@ export function CreateMember() {
 
   const goToList = () => navigate({ to: '/members' });
 
+  /**
+   * The submitted, validated values waiting on a yes — `undefined` when the
+   * dialog is closed. Held rather than re-read from the form on confirm, so
+   * what is agreed to is exactly what is sent.
+   */
+  const [confirming, setConfirming] = useState<CreateMemberFormData>();
+
   const form = useForm({
     defaultValues: {
       firstName: '',
@@ -60,7 +73,15 @@ export function CreateMember() {
       emergencyContactPhone: '',
     },
     validators: { onSubmit: createMemberSchema },
-    onSubmit: ({ value }) =>
+    // Validation runs first, so the confirmation only ever appears over a form
+    // that would actually go through — asking "are you sure" and then showing
+    // a required-field error would be the wrong order.
+    onSubmit: ({ value }) => setConfirming(value),
+  });
+
+  /** The registration, once it has been confirmed. */
+  const create = (value: CreateMemberFormData) =>
+    settle(
       createMember({
         firstName: value.firstName.trim(),
         lastName: value.lastName.trim(),
@@ -72,7 +93,7 @@ export function CreateMember() {
         emergencyContactName: orUndefined(value.emergencyContactName),
         emergencyContactPhone: orUndefined(value.emergencyContactPhone),
       }),
-  });
+    );
 
   return (
     <form
@@ -170,6 +191,25 @@ export function CreateMember() {
           />
         </CardContent>
       </Card>
+
+      {/* A member is a person on the books with a code of their own, and the
+          phone number cannot be edited afterwards, so it is worth one
+          deliberate yes. */}
+      <ConfirmDialog
+        open={!!confirming}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setConfirming(undefined);
+        }}
+        title={t('members.create.confirmTitle')}
+        description={
+          confirming &&
+          `${confirming.firstName.trim()} ${confirming.lastName.trim()} · ${confirming.phone.trim()}`
+        }
+        confirmLabel={t('actions.create')}
+        cancelLabel={t('actions.cancel')}
+        isPending={isPending}
+        onConfirm={() => confirming && create(confirming)}
+      />
     </form>
   );
 }
