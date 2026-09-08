@@ -36,7 +36,6 @@ export const MEMBERSHIP_STATUSES = [
   // taken out before the previous one lapsed, or a member who walked in today
   // for a membership starting next month. Distinct from `expired`, which means
   // they owe money, and from `never`, which means they have bought nothing.
-  'upcoming',
   'expired',
   'never',
 ] as const;
@@ -47,8 +46,8 @@ export const MEMBERSHIP_STATUSES = [
  * when a check-in is refused and travels only in the 403 body.
  *
  * It exists because **the frontend must branch on a code, never on the prose**.
- * Each of these four leads to a different action at the desk — fetch a manager,
- * sell a renewal, tell them to come back on the 1st, sign them up — so the
+ * Each of these three leads to a different action at the desk — fetch a manager,
+ * sell a renewal, sign them up — so the
  * message wording will keep being tuned, and a UI matching on the sentence
  * would break silently the first time it is.
  */
@@ -57,8 +56,6 @@ export const CHECKIN_REFUSAL_REASONS = [
   'suspended',
   /** Has bought before; nothing covers today. They owe money. */
   'expired',
-  /** Bought, but every period still lies ahead. They are early, not overdue. */
-  'upcoming',
   /** Never bought one. Not a lapse — a sale that has not happened yet. */
   'none',
 ] as const;

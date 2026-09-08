@@ -14,6 +14,7 @@ import { MembershipPlansModule } from '../membership-plans/membership-plans.modu
 import { MembershipsModule } from '../memberships/memberships.module';
 import { MembersModule } from '../members/members.module';
 import { PaymentsModule } from '../payments/payments.module';
+import { ReportsModule } from '../reports/reports.module';
 import { RolesModule } from '../roles/roles.module';
 import { StaffModule } from '../staff/staff.module';
 import { AppController } from './app.controller';
@@ -35,6 +36,7 @@ import { AppService } from './app.service';
     MembershipsModule,
     MembersModule,
     PaymentsModule,
+    ReportsModule,
     RolesModule,
     StaffModule,
   ],

@@ -65,12 +65,12 @@ export class MemberListItemDto {
     description:
       'Derived from their memberships on every read, **never stored**, so it ' +
       'cannot go stale.\n\n' +
-      '`active` — a membership covers today. `upcoming` — they have bought ' +
-      'one but every period still lies ahead, either an early renewal or a ' +
-      'walk-in starting next month; nobody owes anything, so do not treat it ' +
-      'as expired. `expired` — they have bought before and nothing covers ' +
-      'today, which does mean they owe money. `never` — they have never ' +
-      'bought one, a real answer rather than missing data.\n\n' +
+      '`active` — a membership covers today. `expired` — they have bought ' +
+      'before and nothing covers today, which means they owe money. `never` ' +
+      '— they have never bought one, a real answer rather than missing ' +
+      'data.\n\n' +
+      'There is no state for a membership that has not started: a sale begins ' +
+      'the day it is made, so nobody can be holding only future cover.\n\n' +
       'Independent of `isSuspended`: a paid-up member can be barred, and a ' +
       'lapsed one is not.',
   })
@@ -87,20 +87,6 @@ export class MemberListItemDto {
       'until 30 Nov" is what the front desk needs, not just a green dot.',
   })
   expiresOn!: string | null;
-
-  @ApiProperty({
-    type: String,
-    format: 'date',
-    nullable: true,
-    example: '2026-10-07',
-    description:
-      'The first day of the soonest membership that has not started yet, or ' +
-      'null if none is pending.\n\nHere so a member refused as `upcoming` can ' +
-      'be told "come back on the 1st" without opening their record. Note it ' +
-      'is the START of the pending period, where `expiresOn` is the END of ' +
-      'the last one — a member can carry both at once, having renewed early.',
-  })
-  nextStartsOn!: string | null;
 
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt!: string;

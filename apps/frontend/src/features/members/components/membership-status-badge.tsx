@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   AlertCircleIcon,
-  Calendar03Icon,
   CheckmarkCircle02Icon,
   MinusSignCircleIcon,
 } from '@hugeicons/core-free-icons';
@@ -27,14 +26,6 @@ const MEMBERSHIP_STATUS = {
     labelKey: 'members.status.active',
     variant: 'default',
     icon: CheckmarkCircle02Icon,
-  },
-  // Paid for, not started — an early renewal, or a walk-in buying next month.
-  // Emphatically not `expired`: nobody owes anything, so it must not carry
-  // destructive weight or the desk will ask them for money.
-  upcoming: {
-    labelKey: 'members.status.upcoming',
-    variant: 'secondary',
-    icon: Calendar03Icon,
   },
   expired: {
     labelKey: 'members.status.expired',
@@ -77,11 +68,6 @@ export function MembershipStatusBadge({
       </Badge>
       {/* "Active until 30 Nov" is what a receptionist needs; a green dot alone
           does not say whether to sell a renewal today. */}
-      {status === 'upcoming' && expiresOn && (
-        <span className="text-xs text-muted-foreground">
-          {t('members.status.coveredUntil', { date: formatDate(expiresOn) })}
-        </span>
-      )}
       {status === 'active' && expiresOn && (
         <span className="text-xs whitespace-nowrap text-muted-foreground">
           {t('members.status.until', { date: formatDate(expiresOn) })}

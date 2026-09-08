@@ -18,15 +18,14 @@ const apiClient = new ApiClient('/api/memberships');
 /**
  * Mirrors `SellMembershipDto`.
  *
- * `startsOn` is optional — omitted, the server starts cover today. `endsOn` and
- * `price` are absent on purpose: the server derives the end date from the
- * plan's duration and snapshots the plan's price, so neither is the client's to
- * state.
+ * There is no start date: a membership begins the day it is sold. `endsOn` and
+ * `price` are absent for the same kind of reason — the server derives the end
+ * date from the plan's duration and snapshots the plan's price, so none of the
+ * three is the client's to state.
  */
 export interface SellMembershipPayload {
   memberId: string;
   planId: string;
-  startsOn?: string;
   isComplimentary?: boolean;
   /**
    * The money handed over at the desk, taken in the same request as the sale.

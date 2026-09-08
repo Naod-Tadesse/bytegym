@@ -32,11 +32,10 @@ export const editMemberSchema = createMemberSchema.omit({ phone: true });
  * Selling a membership is also taking the payment for it, so one form covers
  * both — and at six fields across two decisions it is a page, not a dialog.
  *
- * `startsOn` is deliberately unvalidated beyond being a string: `''` means
- * "today", which the server fills in, and a **future** date is the normal way
- * to renew early — September's cover runs to the 30th while October's is sold
- * on the 20th. There is no `endsOn` and no `price`: the server derives one from
- * the plan's duration and snapshots the other, so neither is ours to send.
+ * There is no start date, no `endsOn` and no `price`. A membership begins the
+ * day it is sold — the server takes the gym's today, so a browser on the wrong
+ * clock cannot shift it — and the end date and price are derived from the plan
+ * and snapshotted. None of the three is ours to send.
  *
  * **There is no `amount` here, and there must not be.** The server computes the
  * amount due from the plan's price plus its registration fee, charging the fee
@@ -49,7 +48,6 @@ export const editMemberSchema = createMemberSchema.omit({ phone: true });
  */
 export const sellMembershipSchema = z.object({
   planId: z.string().min(1, 'Plan is required'),
-  startsOn: z.string(),
   isComplimentary: z.boolean(),
   takePaymentNow: z.boolean(),
   method: z.enum(['cash', 'telebirr', 'cbe_birr', 'bank_transfer', 'card']),

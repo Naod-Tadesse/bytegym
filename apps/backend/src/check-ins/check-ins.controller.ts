@@ -77,7 +77,6 @@ export class CheckInsController {
       '| --- | --- | --- |\n' +
       '| `suspended` | Barred from the premises | Fetch a manager |\n' +
       '| `expired` | Nothing covers today | Sell a renewal |\n' +
-      '| `upcoming` | Every period still ahead | They are early — do not ask for money |\n' +
       '| `none` | Never bought one | Sign them up |\n\n' +
       '`checkin.override` turns the last three into a 201 with a null ' +
       '`membershipId`. It does **not** lift `suspended`.\n\n' +

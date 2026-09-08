@@ -43,6 +43,7 @@ import {
   isZeroAmount,
 } from '@/lib/format';
 import { RecordPaymentDialog } from '../actions/record-payment-dialog';
+import { hasLiveMembership } from '../data/membership-state';
 import { MembershipStatusBadge } from '../components/membership-status-badge';
 import type {
   MemberDetail as MemberDetailType,
@@ -82,6 +83,9 @@ function MemberDetailView({ member }: { member: MemberDetailType }) {
   const [payingFor, setPayingFor] = useState<Membership | undefined>(undefined);
 
   const fullName = `${member.firstName} ${member.lastName}`;
+  // One live membership at a time: while theirs is still running there is
+  // nothing to sell, and the API refuses it. See `hasLiveMembership`.
+  const isActive = hasLiveMembership(member.membershipStatus);
 
   return (
     <div className="m-2 flex flex-col gap-4">
@@ -111,19 +115,36 @@ function MemberDetailView({ member }: { member: MemberDetailType }) {
             A sale takes its own first payment. */}
         {/* The reason most people open this page, so it is the primary button
             and it sits last, where the page's actions end. */}
-        {hasPermission('membership.sell') && (
-          <Button
-            onClick={() =>
-              navigate({
-                to: '/members/$memberId/sell',
-                params: { memberId: member.personId },
-              })
-            }
-          >
-            <HugeiconsIcon icon={SaleTag01Icon} data-icon="inline-start" />
-            {t('members.actions.sellMembership')}
-          </Button>
-        )}
+        {hasPermission('membership.sell') &&
+          (isActive ? (
+            // Disabled with the reason beside it, rather than hidden: the
+            // button vanishing would read as "you may not sell", which is the
+            // wrong lesson — they may, just not yet. The date is the whole
+            // answer, so it is stated here and not left to a click and a 409.
+            <span className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                {t('members.sellMembership.activeUntil', {
+                  date: formatDate(member.expiresOn ?? ''),
+                })}
+              </span>
+              <Button disabled>
+                <HugeiconsIcon icon={SaleTag01Icon} data-icon="inline-start" />
+                {t('members.actions.sellMembership')}
+              </Button>
+            </span>
+          ) : (
+            <Button
+              onClick={() =>
+                navigate({
+                  to: '/members/$memberId/sell',
+                  params: { memberId: member.personId },
+                })
+              }
+            >
+              <HugeiconsIcon icon={SaleTag01Icon} data-icon="inline-start" />
+              {t('members.actions.sellMembership')}
+            </Button>
+          ))}
       </FormPageHeader>
 
       <Card>
@@ -282,7 +303,7 @@ function MembershipHistory({
                 <TableRow>
                   <TableHead>{t('members.memberships.columns.plan')}</TableHead>
                   <TableHead>
-                    {t('members.memberships.columns.cover')}
+                    {t('members.memberships.columns.dates')}
                   </TableHead>
                   {/* What was actually asked for, not the plan's list price:
                       a first sale adds the registration fee on top, and the

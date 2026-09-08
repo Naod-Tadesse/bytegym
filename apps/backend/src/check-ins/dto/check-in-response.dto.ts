@@ -163,8 +163,8 @@ export class CheckInRefusalDto {
     type: String,
     example: 'This membership expired on 2026-08-31',
     description:
-      'Human wording, safe to show as-is and safe to change. The expired and ' +
-      'upcoming messages carry the date they refer to.',
+      'Human wording, safe to show as-is and safe to change. The `expired` ' +
+      'message carries the date the membership ran out.',
   })
   message!: string;
 
@@ -178,9 +178,8 @@ export class CheckInRefusalDto {
       'Why, machine-readably.\n\n' +
       '- `suspended` — barred from the premises. **`checkin.override` does ' +
       'not lift this**; only the member record can.\n' +
-      '- `expired` — has bought before, nothing covers today. Sell a renewal.\n' +
-      '- `upcoming` — bought, but every period still lies ahead. They are ' +
-      'early, not overdue; do not ask them for money.\n' +
+      '- `expired` — has bought before, nothing covers today. Sell a ' +
+      'renewal.\n' +
       '- `none` — never bought one. Sign them up.',
   })
   reason!: CheckInRefusalReason;

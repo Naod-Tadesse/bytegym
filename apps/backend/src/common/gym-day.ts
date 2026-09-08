@@ -1,3 +1,5 @@
+import { sql } from 'drizzle-orm';
+
 /**
  * Date-only arithmetic for the gym's calendar. Everything here is `YYYY-MM-DD`
  * strings, matching the `date` columns — Drizzle's node-postgres driver installs
@@ -41,6 +43,26 @@ export const gymToday = (): string =>
     month: '2-digit',
     day: '2-digit',
   }).format(new Date());
+
+/**
+ * The same day as `gymToday()`, but computed inside Postgres.
+ *
+ * **Never write bare `current_date`** in a query that touches `starts_on` or
+ * `ends_on`. `current_date` is read in the session's timezone, which is UTC on
+ * the server, so between midnight and 03:00 in Addis it is still yesterday: a
+ * membership starting today reads as not yet begun for the first three hours
+ * of every day, and one that ended yesterday still reads `active`.
+ * That is the gym's early-morning shift, the busiest hours the desk works.
+ *
+ * Postgres rather than a bound `gymToday()` so the date is fixed by the same
+ * statement that uses it — a value threaded in from JS can be a request old by
+ * the time it lands, which is a whole day wrong at exactly midnight.
+ *
+ * `::text` on the parameter because `at time zone` needs to know the operand is
+ * text; without it the driver sends an untyped parameter and Postgres cannot
+ * resolve the operator.
+ */
+export const GYM_TODAY_SQL = sql`(now() at time zone ${GYM_TIME_ZONE}::text)::date`;
 
 /**
  * `iso` shifted by whole days, still date-only.

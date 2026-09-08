@@ -28,10 +28,7 @@ function UsersContent() {
 
   return (
     <>
-      <ListPage
-        title={t('users.title')}
-        subtitle={t('users.subtitle')}
-      >
+      <ListPage title={t('users.title')} subtitle={t('users.subtitle')}>
         <DataTable
           columns={columns}
           data={users}

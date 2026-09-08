@@ -107,10 +107,14 @@ export class MembershipsController {
       'from the plan, so repricing or retiring it later leaves history intact. ' +
       'The seller and the cashier come from the access token, and the branch ' +
       'from the member’s home gym — there is no field for any of them.\n\n' +
-      '**Renewing early is normal**: set `startsOn` to the day after the ' +
-      'current membership ends and both rows stand, with unbroken cover. ' +
-      'Overlapping days are refused with a 409 by a database exclusion ' +
-      'constraint, so two receptionists selling at once cannot both succeed.\n\n' +
+      '**One live membership at a time.** A member with a membership that has ' +
+      'not run out is refused with a 409 naming the day it does — including ' +
+      'one that is only booked ahead. Renewing early is therefore not ' +
+      'possible: they buy again on or after the day it lapses. The check runs ' +
+      'inside the transaction, under a lock on the member, so two ' +
+      'receptionists selling at once cannot both succeed.\n\n' +
+      'A database exclusion constraint still refuses two memberships covering ' +
+      'the same day, and is the integrity floor under the rule above.\n\n' +
       'Sending `payment` additionally requires **`payment.record`**: the sale ' +
       'writes a payment row, and `membership.sell` alone must not be a way ' +
       'round the permission that gates taking money. Selling without it needs ' +
@@ -126,7 +130,7 @@ export class MembershipsController {
   )
   @ApiNotFoundError('Member not found')
   @ApiConflictError(
-    'This member already has a membership covering some of those dates',
+    'This member already has an active membership that has not run out',
   )
   sell(@Body() dto: SellMembershipDto, @CurrentUser() user: AuthenticatedUser) {
     return this.membershipsService.sell(

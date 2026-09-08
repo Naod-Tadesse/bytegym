@@ -7,51 +7,19 @@ import {
 import { and, eq, ilike, isNull, or, sql } from 'drizzle-orm';
 
 import { assertCanWriteToBranch, assertInScope } from '../common/branch-scope';
-import type { MembershipStatus } from '../common/enums';
 import { countOf, paginated, toOffset } from '../common/paginate';
 import type { PaginationDto } from '../common/pagination.dto';
 import { isUniqueViolation } from '../common/pg-errors';
 import type { Database, Transaction } from '../database/database.client';
 import { DRIZZLE } from '../database/database.constants';
 import { nextMemberCode } from '../database/member-code';
+import { membershipStatusOf } from '../database/membership-status';
 import * as schema from '../database/schema';
 import type { CreateMemberDto, UpdateMemberDto } from './dto/member.dto';
 
 const PHONE_TAKEN = 'A person with this phone number already exists';
 
-/**
- * `active` | `expired` | `never` — computed on every read, **never stored**.
- *
- * A column would need a nightly job to flip members to expired, and the morning
- * that job fails the column lies while the front desk trusts it. This cannot go
- * stale: it is `current_date` against the rows themselves.
- *
- * `never` is a real answer rather than missing data, which is why it is its own
- * branch: someone registered but never sold anything is a different problem
- * from someone who has lapsed, and the desk acts differently on each.
- *
- * There is no `frozen` and no session-pack state — both were deliberately left
- * out of the design.
- */
-const membershipStatus = sql<MembershipStatus>`
-  case
-    when not exists (select 1 from ${schema.memberships} m
-                     where m.member_id = ${schema.member.personId}
-                       and m.deleted_at is null) then 'never'
-    when exists (select 1 from ${schema.memberships} m
-                 where m.member_id = ${schema.member.personId}
-                   and m.deleted_at is null
-                   and current_date between m.starts_on and m.ends_on) then 'active'
-    -- Every membership still lies ahead: sold, paid for, not started. Reporting
-    -- that as 'expired' told the desk they owed money while expiresOn showed a
-    -- future date — incoherent, and reachable because a forward-dated start is
-    -- exactly how early renewal works.
-    when not exists (select 1 from ${schema.memberships} m
-                     where m.member_id = ${schema.member.personId}
-                       and m.deleted_at is null
-                       and m.starts_on <= current_date) then 'upcoming'
-    else 'expired'
-  end`;
+const membershipStatus = membershipStatusOf(schema.member.personId);
 
 /**
  * The last day covered by any membership, or null if there has never been one.
@@ -63,24 +31,6 @@ const membershipStatus = sql<MembershipStatus>`
 const expiresOn = sql<string | null>`(
   select max(m.ends_on) from ${schema.memberships} m
   where m.member_id = ${schema.member.personId} and m.deleted_at is null)`;
-
-/**
- * The first day of the soonest membership that has not started yet, or null if
- * none is pending.
- *
- * Exists for one sentence at the front desk. A member turned away as `upcoming`
- * needs to hear "come back on the 1st", and without this the only way to get
- * that date is to open their record and read the membership history — a second
- * screen for a one-line answer, on the busiest screen in the building.
- *
- * `min`, not `max`: with two future periods booked, the one that matters is the
- * one they can next walk in on.
- */
-const nextStartsOn = sql<string | null>`(
-  select min(m.starts_on) from ${schema.memberships} m
-  where m.member_id = ${schema.member.personId}
-    and m.deleted_at is null
-    and m.starts_on > current_date)`;
 
 /** What GET /members rows carry. Kept in step with MemberListItemDto by hand. */
 const listColumns = {
@@ -98,7 +48,6 @@ const listColumns = {
   // reads it off the row, and fetching the detail per member would be an N+1.
   membershipStatus,
   expiresOn,
-  nextStartsOn,
   createdAt: schema.member.createdAt,
 };
 

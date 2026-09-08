@@ -1,7 +1,10 @@
 import { useForm } from '@tanstack/react-form';
 import { useTranslation } from 'react-i18next';
 
-import { FormMultiSelectField, FormSelectField } from '@/components/form-fields';
+import {
+  FormMultiSelectField,
+  FormSelectField,
+} from '@/components/form-fields';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

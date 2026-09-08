@@ -8,10 +8,7 @@ import type { UserListItem } from '../data/types';
  * so this list cannot show them — it lives on the Staff row menu instead.
  */
 export type UserDialogType =
-  | 'editAccess'
-  | 'resetPassword'
-  | 'toggleLogin'
-  | 'revokeAccess';
+  'editAccess' | 'resetPassword' | 'toggleLogin' | 'revokeAccess';
 
 interface UserContextValue {
   open: UserDialogType | null;

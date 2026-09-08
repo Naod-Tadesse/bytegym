@@ -9,12 +9,13 @@ import { alias } from 'drizzle-orm/pg-core';
 
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { branchScopeOf } from '../common/branch-scope';
-import type { CheckInRefusalReason, MembershipStatus } from '../common/enums';
-import { gymToday } from '../common/gym-day';
+import type { CheckInRefusalReason } from '../common/enums';
+import { GYM_TODAY_SQL, gymToday } from '../common/gym-day';
 import { countOf, paginated, toOffset } from '../common/paginate';
 import { isUniqueViolation } from '../common/pg-errors';
 import type { Database } from '../database/database.client';
 import { DRIZZLE } from '../database/database.constants';
+import { membershipStatusOf } from '../database/membership-status';
 import * as schema from '../database/schema';
 import { MembersService } from '../members/members.service';
 import type { CheckInQueryDto, RecordCheckInDto } from './dto/check-in.dto';
@@ -50,30 +51,7 @@ const overrideByName = sql<
   string | null
 >`${overrider.firstName} || ' ' || ${overrider.lastName}`;
 
-/**
- * Where the member stands TODAY, not on the day they came in.
- *
- * Deliberately the same derivation as the members list rather than something
- * read off `check_ins.membership_id` — that column records which membership the
- * visit fell under at the time, and the desk scanning today's arrivals wants to
- * know who is about to lapse, not who was covered this morning. The two agree
- * on the day itself and diverge afterwards, which is the useful direction.
- */
-const membershipStatus = sql<MembershipStatus>`
-  case
-    when not exists (select 1 from ${schema.memberships} m
-                     where m.member_id = ${schema.checkIns.memberId}
-                       and m.deleted_at is null) then 'never'
-    when exists (select 1 from ${schema.memberships} m
-                 where m.member_id = ${schema.checkIns.memberId}
-                   and m.deleted_at is null
-                   and current_date between m.starts_on and m.ends_on) then 'active'
-    when not exists (select 1 from ${schema.memberships} m
-                     where m.member_id = ${schema.checkIns.memberId}
-                       and m.deleted_at is null
-                       and m.starts_on <= current_date) then 'upcoming'
-    else 'expired'
-  end`;
+const membershipStatus = membershipStatusOf(schema.checkIns.memberId);
 
 /** The last day any membership covers, so the card can count down to it. */
 const expiresOn = sql<string | null>`(
@@ -96,7 +74,7 @@ const coverStartsOn = sql<string | null>`(
   select min(m.starts_on) from ${schema.memberships} m
   where m.member_id = ${schema.checkIns.memberId}
     and m.deleted_at is null
-    and current_date between m.starts_on and m.ends_on)`;
+    and ${GYM_TODAY_SQL} between m.starts_on and m.ends_on)`;
 
 /** What every check-in response carries. Kept in step with CheckInDto by hand. */
 const checkInColumns = {
@@ -257,21 +235,15 @@ export class CheckInsService {
       dto.override === true && user.permissions.includes(OVERRIDE_PERMISSION);
 
     if (!cover.membershipId && !canOverride) {
-      // Four distinct refusals, not two: each one is a different next action at
-      // the desk. `expired` means sell them a renewal, `upcoming` means they
-      // are early and must NOT be asked for money, `none` means sign them up.
+      // Three distinct refusals, not one: each is a different next action at
+      // the desk. `expired` means sell them a renewal, `none` means sign them
+      // up, and `suspended` — thrown above — means fetch a manager.
       if (cover.total === 0) {
         throw refusal('none', NO_MEMBERSHIP);
       }
-      if (cover.lastEndedOn) {
-        throw refusal(
-          'expired',
-          `This membership expired on ${cover.lastEndedOn}`,
-        );
-      }
       throw refusal(
-        'upcoming',
-        `This membership starts on ${cover.nextStartsOn}`,
+        'expired',
+        `This membership expired on ${cover.lastEndedOn}`,
       );
     }
 
@@ -364,9 +336,6 @@ export class CheckInsService {
         lastEndedOn: sql<
           string | null
         >`(max(${m.endsOn}) filter (where ${m.endsOn} < ${on}::date))::text`,
-        nextStartsOn: sql<
-          string | null
-        >`(min(${m.startsOn}) filter (where ${m.startsOn} > ${on}::date))::text`,
         // ::int because count() is a bigint, which the driver returns as a
         // string — `=== 0` would then never be true.
         total: sql<number>`count(*)::int`,

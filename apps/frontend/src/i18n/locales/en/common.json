@@ -4,7 +4,28 @@
     "tagline": "Gym management"
   },
   "dashboard": {
-    "subtitle": "What is happening across the gym today"
+    "subtitle": "What is happening across the gym today",
+    "noAccess": {
+      "title": "No figures to show",
+      "body": "Viewing reports is not part of your role. Everything you can reach is in the sidebar."
+    },
+    "stats": {
+      "activeMembers": "Active members",
+      "activeMembersHint": "A membership is running today",
+      "inactiveMembers": "Inactive members",
+      "inactiveMembersHint": "Expired or never joined — the list worth calling",
+      "checkInsToday": "Check-ins today",
+      "checkInsTodayHint": "Members through the door so far",
+      "takenToday": "Taken today",
+      "takenTodayHint_one": "{{count}} payment, voided ones excluded",
+      "takenTodayHint_other": "{{count}} payments, voided ones excluded"
+    },
+    "byStatus": {
+      "title": "Members by status",
+      "subtitle": "{{total}} on the books",
+      "suspended": "Suspended",
+      "suspendedHint": "counted above as well"
+    }
   },
   "actions": {
     "addMember": "Add member",
@@ -27,18 +48,6 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
-  },
-  "stats": {
-    "activeMembers": "Active members",
-    "checkInsToday": "Check-ins today",
-    "monthlyRevenue": "Monthly revenue",
-    "classesToday": "Classes today"
-  },
-  "traffic": {
-    "title": "Gym traffic",
-    "description": "Check-ins per session, last 7 days",
-    "morning": "Morning",
-    "evening": "Evening"
   },
   "checkIns": {
     "title": "Recent check-ins",
@@ -72,11 +81,8 @@
       "expired": "Their membership has run out",
       "expiredOn": "Their membership ran out on {{date}}",
       "expiredNext": "Sell them a renewal.",
-      "upcoming": "Their membership has not started yet",
-      "upcomingNext": "Nothing is owed — tell them the date it starts.",
       "none": "They have never bought a membership",
-      "noneNext": "Sell them one to let them through the door.",
-      "upcomingOn": "Their membership starts on {{date}}"
+      "noneNext": "Sell them one to let them through the door."
     },
     "today": {
       "title": "Today’s check-ins",
@@ -115,10 +121,6 @@
       "clearBranch": "Clear the branch filter"
     }
   },
-  "tabs": {
-    "members": "Members",
-    "classes": "Classes"
-  },
   "members": {
     "title": "Members",
     "subtitle": "Everyone who trains here",
@@ -148,9 +150,7 @@
       "active": "Active",
       "expired": "Expired",
       "never": "No membership",
-      "until": "until {{date}}",
-      "upcoming": "Starts later",
-      "coveredUntil": "covered to {{date}}"
+      "until": "until {{date}}"
     },
     "fields": {
       "firstName": "First name",
@@ -164,9 +164,8 @@
       "emergencyContactPhone": "Emergency contact phone",
       "joined": "Joined",
       "plan": "Plan",
-      "startsOn": "Starts on",
       "isComplimentary": "Complimentary",
-      "isComplimentaryHint": "Nothing is owed for this membership. It still covers the same dates and still blocks a second membership over them."
+      "isComplimentaryHint": "Nothing is owed for this membership. It still runs for the same dates and still blocks a second membership over them."
     },
     "placeholders": {
       "pickDate": "Pick a date",
@@ -174,8 +173,7 @@
       "branch": "Select a branch",
       "searchBranch": "Search branches…",
       "plan": "Select a plan",
-      "searchPlan": "Search plans…",
-      "startsToday": "Starts today"
+      "searchPlan": "Search plans…"
     },
     "memberships": {
       "title": "Memberships",
@@ -187,7 +185,7 @@
       "includesRegistration": "includes {{amount}} registration",
       "columns": {
         "plan": "Plan",
-        "cover": "Cover",
+        "dates": "Dates",
         "amountDue": "Amount due",
         "balance": "Balance",
         "type": "Type",
@@ -196,8 +194,8 @@
     },
     "sellMembership": {
       "title": "Sell a membership",
-      "coverTitle": "Cover",
-      "coverSubtitle": "The end date comes from the plan's duration and the price is recorded as it stands today, so a later price change does not restate this sale.",
+      "membershipTitle": "Membership",
+      "membershipSubtitle": "The end date comes from the plan's duration and the price is recorded as it stands today, so a later price change does not restate this sale.",
       "paymentTitle": "Payment",
       "paymentSubtitle": "Selling and taking the money are one act at the desk, so both are recorded together.",
       "pickPlanFirst": "Choose a plan to see what is due.",
@@ -207,7 +205,11 @@
       "amountDue": "Amount due",
       "takePaymentNow": "Payment taken now",
       "takePaymentNowHint": "Records the full amount due against this sale. Turn it off to sell on account and take the money later — the membership starts owing the whole balance.",
-      "confirm": "Sell membership"
+      "confirm": "Sell membership",
+      "activeUntil": "Active until {{date}}",
+      "blockedTitle": "Already has one",
+      "blockedBody": "{{name}} has an active membership running to {{date}}. The gym sells one membership at a time, so sell again once that has run out.",
+      "backToMember": "Back to member"
     },
     "create": {
       "title": "New member",
@@ -223,7 +225,7 @@
     },
     "unsuspend": {
       "title": "Lift this suspension?",
-      "description": "{{name}} will be admitted again, provided their membership covers today. Nothing else about their record changes.",
+      "description": "{{name}} will be admitted again, provided their membership is still running. Nothing else about their record changes.",
       "confirm": "Lift suspension"
     },
     "delete": {
@@ -295,7 +297,7 @@
   },
   "plans": {
     "title": "Membership plans",
-    "subtitle": "What a member can buy, and how long it covers them for",
+    "subtitle": "What a member can buy, and how long it lasts",
     "actions": {
       "create": "New plan",
       "search": "Search plans…",
@@ -347,10 +349,7 @@
   },
   "status": {
     "active": "Active",
-    "inactive": "Inactive",
-    "expiring": "Expiring",
-    "lapsed": "Lapsed",
-    "frozen": "Frozen"
+    "inactive": "Inactive"
   },
   "branches": {
     "title": "Branches",
@@ -584,11 +583,6 @@
       "description": "Choose what {{name}} can do once signed in. Replacing their roles signs them out, so they will need to sign in again.",
       "confirm": "Save access"
     }
-  },
-  "classes": {
-    "title": "Today’s schedule",
-    "description": "Bookings against capacity",
-    "capacity": "{{booked}}/{{capacity}}"
   },
   "days": {
     "mon": "Mon",

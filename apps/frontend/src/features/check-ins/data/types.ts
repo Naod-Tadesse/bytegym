@@ -62,18 +62,13 @@ export interface CheckIn {
  *   bypass it; the next action is to fetch a manager.
  * - `expired` — they have bought before and nothing covers today. They owe
  *   money: sell them a renewal.
- * - `upcoming` — they have bought, and it starts later. Nobody owes anything;
- *   tell them the date. Merging this with `expired` would ask a paid-up member
- *   for money.
  * - `none` — they have never bought one. Sell them a membership.
  */
-export type CheckInRefusalReason =
-  'suspended' | 'expired' | 'upcoming' | 'none';
+export type CheckInRefusalReason = 'suspended' | 'expired' | 'none';
 
 export const CHECK_IN_REFUSAL_REASONS: CheckInRefusalReason[] = [
   'suspended',
   'expired',
-  'upcoming',
   'none',
 ];
 

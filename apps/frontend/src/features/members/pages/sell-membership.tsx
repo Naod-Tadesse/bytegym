@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 
 import {
   FormComboboxField,
-  FormDatePickerField,
   FormSelectField,
   FormSwitchField,
   FormTextField,
@@ -26,9 +25,10 @@ import type { MembershipPlan } from '@/features/membership-plans/data/types';
 import { usePlanOptions } from '@/features/membership-plans/hooks/use-membership-plans';
 import { usePaymentMethodOptions } from '@/features/payments/components/payment-badges';
 import { useDebounce } from '@/hooks/use-debounce';
-import { addAmounts, formatBirr, isZeroAmount } from '@/lib/format';
+import { addAmounts, formatBirr, formatDate, isZeroAmount } from '@/lib/format';
 import { settle } from '@/lib/settle';
 import { cn } from '@/lib/utils';
+import { hasLiveMembership } from '../data/membership-state';
 import { orUndefined, sellMembershipSchema } from '../data/schema';
 import type { MemberDetail } from '../data/types';
 import { useMember } from '../hooks/use-members';
@@ -77,7 +77,56 @@ export function SellMembership({ memberId }: { memberId: string }) {
   if (isLoading) return <SellMembershipSkeleton />;
   if (!member) return null;
 
+  // The button that leads here is already disabled while a membership is
+  // running, so this catches the ways round it: a bookmarked or shared link, a
+  // back button after a sale, and a page left open while a colleague sold at
+  // the other desk. Rendering the form and letting the API 409 would waste the
+  // walk to the counter, so the refusal is stated up front instead.
+  if (hasLiveMembership(member.membershipStatus)) {
+    return <AlreadyCovered member={member} />;
+  }
+
   return <SellMembershipForm member={member} />;
+}
+
+/** Why there is no form: they are covered, and the date they are free again. */
+function AlreadyCovered({ member }: { member: MemberDetail }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  const goToMember = () =>
+    navigate({
+      to: '/members/$memberId',
+      params: { memberId: member.personId },
+    });
+
+  return (
+    <div className="m-2 flex flex-col gap-4">
+      <FormPageHeader
+        title={t('members.sellMembership.title')}
+        subtitle={`${member.firstName} ${member.lastName} · ${member.memberCode}`}
+        onBack={goToMember}
+      />
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('members.sellMembership.blockedTitle')}</CardTitle>
+          <CardDescription>
+            {t('members.sellMembership.blockedBody', {
+              name: `${member.firstName} ${member.lastName}`,
+              // Never null here: cover that has not run out means a membership
+              // exists, and `expiresOn` is the furthest `endsOn` of one.
+              date: formatDate(member.expiresOn ?? ''),
+            })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="outline" onClick={goToMember}>
+            {t('members.sellMembership.backToMember')}
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 function SellMembershipForm({ member }: { member: MemberDetail }) {
@@ -133,9 +182,6 @@ function SellMembershipForm({ member }: { member: MemberDetail }) {
   const form = useForm({
     defaultValues: {
       planId: '',
-      // Empty means today; the server fills it in so the gym's date is used,
-      // not the browser's.
-      startsOn: '',
       isComplimentary: false,
       // On by default: money changing hands at the desk is the normal sale,
       // and an instalment is the exception that has to be chosen.
@@ -155,7 +201,8 @@ function SellMembershipForm({ member }: { member: MemberDetail }) {
         sellMembershipAsync({
           memberId: member.personId,
           planId: value.planId,
-          startsOn: orUndefined(value.startsOn),
+          // No start date: a membership begins the day it is sold, and the
+          // server takes the gym's today rather than the browser's.
           isComplimentary: value.isComplimentary,
           // Omitted for a comped sale and for a plan that costs nothing — the
           // API 400s on a payment against either — and omitted when nothing was
@@ -218,9 +265,9 @@ function SellMembershipForm({ member }: { member: MemberDetail }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('members.sellMembership.coverTitle')}</CardTitle>
+          <CardTitle>{t('members.sellMembership.membershipTitle')}</CardTitle>
           <CardDescription>
-            {t('members.sellMembership.coverSubtitle')}
+            {t('members.sellMembership.membershipSubtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -236,15 +283,6 @@ function SellMembershipForm({ member }: { member: MemberDetail }) {
             hasNext={hasMorePlans}
             isLoading={isLoadingPlans}
             required
-          />
-          {/* No `disableFuture`: dating a membership forward is how an early
-              renewal is sold — this month runs to its end, the new one picks
-              up the day after, and cover is unbroken. */}
-          <FormDatePickerField
-            form={form}
-            name="startsOn"
-            label={t('members.fields.startsOn')}
-            placeholder={t('members.placeholders.startsToday')}
           />
           <FormSwitchField
             form={form}

@@ -8,7 +8,7 @@ export type Gender = 'male' | 'female';
  * one yet. `never` is a real answer the front desk acts on — it is not missing
  * data, and it must not render as a blank cell.
  */
-export type MembershipStatus = 'active' | 'upcoming' | 'expired' | 'never';
+export type MembershipStatus = 'active' | 'expired' | 'never';
 
 /**
  * The identifier is the person id — `member` is keyed by it, exactly as
@@ -37,12 +37,6 @@ export interface MemberListItem {
   membershipStatus: MembershipStatus;
   /** The furthest `endsOn` they hold; `null` when `membershipStatus` is `never`. */
   expiresOn: string | null;
-  /**
-   * The START of the soonest membership not yet begun, or null if none is
-   * pending. A member can carry this and `expiresOn` at once, having renewed
-   * early — that one is the END of the last period.
-   */
-  nextStartsOn: string | null;
   createdAt: string;
 }
 

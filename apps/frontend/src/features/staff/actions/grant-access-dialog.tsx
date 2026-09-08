@@ -1,10 +1,7 @@
 import { useForm } from '@tanstack/react-form';
 import { useTranslation } from 'react-i18next';
 
-import {
-  FormMultiSelectField,
-  FormTextField,
-} from '@/components/form-fields';
+import { FormMultiSelectField, FormTextField } from '@/components/form-fields';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -49,7 +46,11 @@ export function GrantAccessDialog({
   const { options: roleOptions, isLoading: isLoadingRoles } = useRoleOptions();
 
   const form = useForm({
-    defaultValues: { roleIds: [] as string[], password: '', confirmPassword: '' },
+    defaultValues: {
+      roleIds: [] as string[],
+      password: '',
+      confirmPassword: '',
+    },
     validators: { onSubmit: grantAccessSchema },
     onSubmit: async ({ value }) =>
       // Settled, not rethrown: a 400 (the job title forbids a login — a

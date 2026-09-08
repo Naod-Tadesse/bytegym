@@ -27,7 +27,7 @@ const apiClient = new ApiClient('/api/check-ins');
 export interface RecordCheckInPayload {
   memberId: string;
   /**
-   * Admit them anyway, over an `expired`, `upcoming` or `none` refusal.
+   * Admit them anyway, over an `expired` or `none` refusal.
    *
    * **Only ever sent by the override button, and omitted entirely otherwise.**
    * Holding `checkin.override` is permission to make the decision, not the

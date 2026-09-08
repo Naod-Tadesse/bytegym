@@ -104,11 +104,7 @@ export function MemberCheckInCard({
         {/* Not shown once they are in: the refusal that was overridden is
             history, and the confirmation is what the desk needs to read. */}
         {refusal && !admitted && (
-          <CheckInRefusal
-            reason={refusal}
-            expiresOn={member.expiresOn}
-            nextStartsOn={member.nextStartsOn}
-          />
+          <CheckInRefusal reason={refusal} expiresOn={member.expiresOn} />
         )}
 
         <div className="flex items-center gap-2">

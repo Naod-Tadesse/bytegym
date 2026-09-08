@@ -2,12 +2,10 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
-  IsDateString,
   IsIn,
   IsOptional,
   IsString,
   IsUUID,
-  Matches,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
@@ -17,7 +15,6 @@ import {
   PAYMENT_METHODS,
   type PaymentMethod,
 } from '../../common/enums';
-import { DATE_ONLY_PATTERN } from '../../common/gym-day';
 import { PaginationDto } from '../../common/pagination.dto';
 
 /**
@@ -84,28 +81,6 @@ export class SellMembershipDto {
   @IsUUID()
   planId!: string;
 
-  @ApiPropertyOptional({
-    type: String,
-    format: 'date',
-    pattern: DATE_ONLY_PATTERN.source,
-    example: '2026-09-07',
-    description:
-      'First day of cover, **date only** — `2026-09-07`, not a timestamp. ' +
-      'Defaults to today in the gym’s timezone.\n\n' +
-      'Set it to the day after an existing membership ends to renew early: ' +
-      'both rows stay real and cover is unbroken. Any date the member is ' +
-      'already covered for is refused with a 409.',
-  })
-  @IsOptional()
-  // Both, and neither is redundant: the pattern rejects a full timestamp and
-  // the compact `20260907`, which IsDateString accepts and the end-date maths
-  // cannot read; `strict` rejects `2026-02-30`, which the pattern cannot see.
-  // Either gap reaches Postgres as a 500 instead of a 400.
-  @Matches(DATE_ONLY_PATTERN, {
-    message: 'startsOn must be a date in YYYY-MM-DD form',
-  })
-  @IsDateString({ strict: true })
-  startsOn?: string;
 
   @ApiPropertyOptional({
     type: Boolean,

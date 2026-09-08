@@ -6,10 +6,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 
-import { addDaysISO, gymToday } from '../common/gym-day';
+import { GYM_TODAY_SQL, addDaysISO, gymToday } from '../common/gym-day';
 import { countOf, paginated, toOffset } from '../common/paginate';
 import { isExclusionViolation } from '../common/pg-errors';
 import type { Database, Transaction } from '../database/database.client';
@@ -24,8 +24,24 @@ import type {
 /** Taking money has its own permission, even inside a sale. */
 const PAYMENT_PERMISSION = 'payment.record';
 
+/**
+ * One live membership at a time. A member whose membership has not run out
+ * cannot be sold another — not even a forward-dated one that would start the
+ * day after, which the date ranges themselves would happily allow.
+ *
+ * This is a **policy** rule, not an integrity one, and it is deliberately
+ * stricter than the exclusion constraint underneath it: that refuses two
+ * memberships covering the same *day*, while this refuses a second one for as
+ * long as any membership remains live. The consequence, accepted knowingly, is
+ * that renewing early is not possible — a member pays on or after the day
+ * their membership lapses, never before.
+ */
+const stillActive = (until: string) =>
+  `This member already has an active membership until ${until}. Sell again ` +
+  `once it has run out.`;
+
 const OVERLAPS =
-  'This member already has a membership covering some of those dates';
+  'This member already has a membership over some of those dates';
 const COMPLIMENTARY_IS_UNPAID =
   'A complimentary membership owes nothing, so no payment can be taken for it';
 const NOTHING_TO_PAY =
@@ -307,9 +323,11 @@ export class MembershipsService {
       throw new BadRequestException(COMPLIMENTARY_IS_UNPAID);
     }
 
-    // The gym's local date, not UTC: Addis is UTC+3, so between midnight and
-    // 03:00 a UTC "today" is still yesterday and would sell a day short.
-    const startsOn = dto.startsOn ?? gymToday();
+    // Always today, and there is no field to say otherwise: a membership
+    // begins when it is sold. The gym's local date, not UTC — Addis is UTC+3,
+    // so between midnight and 03:00 a UTC "today" is still yesterday and would
+    // sell a day short.
+    const startsOn = gymToday();
     // ends_on is INCLUSIVE, so a 30-day plan starting today ends on day 29.
     const endsOn = addDaysISO(startsOn, plan.durationDays - 1);
 
@@ -328,6 +346,33 @@ export class MembershipsService {
           .from(schema.member)
           .where(eq(schema.member.personId, member.personId))
           .for('update');
+
+        // Under the same lock, and for the same reason: two sales landing
+        // together would both read "no cover" and both insert. The exclusion
+        // constraint would catch that only if the two happened to overlap, and
+        // a forward-dated pair does not — so without this the rule holds
+        // everywhere except under the race it exists to survive.
+        const [covering] = await tx
+          .select({ endsOn: schema.memberships.endsOn })
+          .from(schema.memberships)
+          .where(
+            and(
+              eq(schema.memberships.memberId, member.personId),
+              isNull(schema.memberships.deletedAt),
+              // Cover that has not run out yet — today's and anything booked
+              // ahead of it. An expired membership is not cover, so a lapsed
+              // member buys again freely.
+              gte(schema.memberships.endsOn, GYM_TODAY_SQL),
+            ),
+          )
+          // The furthest-out end date, so the message names the day they are
+          // actually free to buy again rather than the nearest one.
+          .orderBy(desc(schema.memberships.endsOn))
+          .limit(1);
+
+        if (covering) {
+          throw new ConflictException(stillActive(covering.endsOn));
+        }
 
         // Read inside the transaction, under the lock — reading it outside
         // would leave a gap in which the member's first membership appears.
