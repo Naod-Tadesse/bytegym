@@ -1,0 +1,22 @@
+node_modules
+**/node_modules
+dist
+**/dist
+.nx
+.git
+.github
+.vscode
+.idea
+coverage
+**/coverage
+tmp
+out-tsc
+**/out-tsc
+# Never bake secrets into an image. Production values arrive as environment
+# variables from compose — see docker-compose.vps.yml.
+.env
+.env.*
+**/.env
+**/.env.*
+*.log
+.DS_Store

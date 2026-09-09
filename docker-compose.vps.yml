@@ -1,0 +1,143 @@
+# The deployed stack: postgres, the API, the SPA, and a one-shot migrator.
+#
+#   docker compose -f docker-compose.vps.yml up --build -d
+#
+# Every value comes from the environment — `KEY=${KEY}` — so nothing secret is
+# in this file or in the image. On a plain VPS put them in a `.env` beside this
+# file; under Coolify use its Shared Variables so one edit covers every service.
+#
+# `docker-compose.yml` is the local database only. This file is the whole thing.
+
+services:
+  # ============ Database ============
+  #
+  # In the stack rather than managed, because this is one gym on one box. Swap
+  # it for a hosted database by deleting this service and pointing DATABASE_URL
+  # somewhere else — nothing below assumes it is local except the hostname.
+  postgres:
+    image: postgres:18-alpine
+    container_name: bytegym-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bytegym}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set a password}
+      POSTGRES_DB: ${POSTGRES_DB:-bytegym}
+    volumes:
+      # postgres:18+ expects the mount at /var/lib/postgresql and keeps the
+      # cluster in a major-version subdirectory. Mounting .../data breaks
+      # startup — the same note as the local compose file.
+      - bytegym-pgdata:/var/lib/postgresql
+    # Deliberately no `ports:`. The database is reachable inside the network
+    # only; publishing 5432 on a VPS puts it on the public internet.
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-bytegym} -d ${POSTGRES_DB:-bytegym}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - bytegym
+
+  # ============ Schema and catalogues ============
+  #
+  # Runs once per deploy and exits. Migrations, then the seed — which is what
+  # creates the permission catalogue, the job titles and the first admin. A
+  # fresh database without it has no permissions at all and nobody can sign in.
+  #
+  # Built from the `builder` stage because drizzle-kit and tsx are devDeps: the
+  # production image deliberately has neither. Both commands are idempotent, so
+  # re-running a deploy is safe.
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: ${DOCKER_REGISTRY:-}bytegym-migrate:${IMAGE_TAG:-latest}
+    container_name: bytegym-migrate
+    restart: 'no'
+    command:
+      - sh
+      - -c
+      - npx nx run @org/backend:db-migrate && npx nx run @org/backend:db-seed
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - ADMIN_PHONE=${ADMIN_PHONE}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - bytegym
+
+  # ============ API ============
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${DOCKER_REGISTRY:-}bytegym-api:${IMAGE_TAG:-latest}
+    container_name: bytegym-api
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=${PORT:-3000}
+      # Container hostname, not localhost: this resolves on the compose network.
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET:?generate with openssl rand -hex 32}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-15m}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:?generate a second, different one}
+      - JWT_REFRESH_EXPIRATION=${JWT_REFRESH_EXPIRATION:-7d}
+      # The browser's origin for the SPA. Also gates the WebSocket handshake —
+      # the gateway reads this same list, so a missing origin breaks live
+      # updates silently while the REST API keeps working.
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      # Unset means nothing is ever texted; messages go to the log instead.
+      - SMS_PROVIDER=${SMS_PROVIDER:-}
+      - SMS_API_KEY=${SMS_API_KEY:-}
+      - SMS_BASE_URL=${SMS_BASE_URL:-}
+      # Defaults to the test handset even when unset. Set it to `all` only when
+      # the gym is ready to text real members.
+      - SMS_ALLOWED_RECIPIENTS=${SMS_ALLOWED_RECIPIENTS:-}
+      # The spec enumerates every route and permission name, so it is off unless
+      # asked for.
+      - SWAGGER_ENABLED=${SWAGGER_ENABLED:-false}
+    ports:
+      - '${PORT:-3000}:${PORT:-3000}'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - bytegym
+
+  # ============ SPA ============
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        # Compiled into the bundle, so changing it needs a rebuild, not a
+        # restart. It must be the API's public address — the browser and the
+        # socket both dial it directly.
+        VITE_BASE_URL: ${VITE_BASE_URL}
+    image: ${DOCKER_REGISTRY:-}bytegym-web:${IMAGE_TAG:-latest}
+    container_name: bytegym-web
+    restart: unless-stopped
+    ports:
+      - '${WEB_PORT:-8080}:80'
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - bytegym
+
+volumes:
+  bytegym-pgdata:
+
+networks:
+  bytegym:
+    driver: bridge
