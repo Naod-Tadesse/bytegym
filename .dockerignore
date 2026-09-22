@@ -12,6 +12,13 @@ coverage
 tmp
 out-tsc
 **/out-tsc
+# Test artefacts. `playwright/.auth` matters most: it holds real access tokens
+# for the e2e personas, and nothing of the sort belongs in a shipped image.
+test-output
+**/test-output
+playwright-report
+**/playwright-report
+**/playwright/.auth
 # Never bake secrets into an image. Production values arrive as environment
 # variables from compose — see docker-compose.vps.yml.
 .env
