@@ -183,8 +183,9 @@ export class SmsQueryDto extends PaginationDto {
     enum: [...SMS_STATUSES],
     enumName: SMS_STATUS_ENUM_NAME,
     description:
-      '`held` is not a failure: the test allowlist stopped it, so nothing was ' +
-      'attempted and nothing was charged.',
+      '`held` is a historical status from when a test allowlist could stop a ' +
+      'message. Nothing writes it now — new messages are `sent` or `failed` — ' +
+      'but older rows still carry it, so it remains filterable.',
   })
   @IsOptional()
   @IsIn([...SMS_STATUSES])

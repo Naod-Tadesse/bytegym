@@ -1,84 +1,34 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { SMS_SENDER, type SmsResult, type SmsSender } from './sms-sender';
 
 /**
- * Lift the test restriction. Any other value — including leaving it unset — and
- * only the numbers in {@link SmsService.allowed} are ever texted.
- */
-const UNRESTRICTED = 'all';
-
-/**
- * While the gym is testing, the only number that may receive a message.
+ * Sending, as the rest of the application sees it.
  *
- * A **default in code**, not merely a line in `.env`: forgetting an environment
- * variable must fail towards texting nobody, never towards texting every member
- * on the books. It is the same reasoning that makes `data_scope` default to
- * `branch` — the bug that skips the config grants too little, not too much.
+ * Every member on the books is a valid recipient. There is no allowlist: the
+ * one guard that decides whether anything leaves the building is which sender
+ * is wired up, and that is `SMS_PROVIDER` — omit it and `LogSmsSender` writes
+ * to the log instead. One switch, at the boundary, rather than a second filter
+ * further in that has to be remembered and lifted.
  *
- * Remove this default when the gym goes live; `SMS_ALLOWED_RECIPIENTS=all` is
- * the switch until then.
- */
-const TEST_RECIPIENTS = ['0968931531'];
-
-/**
- * Sending, with the guards that must hold whatever the provider is.
- *
- * The allowlist lives here rather than in an adapter on purpose. An adapter is
- * the thing most likely to be swapped — a better rate, a different vendor — and
- * a safety rule that can be lost by changing providers is not a safety rule.
+ * This stays a service rather than exporting `SMS_SENDER` directly because it
+ * is the seam callers already depend on, and the natural home for anything that
+ * must hold whatever the provider is — a rate limit, a quiet-hours rule, an
+ * opt-out list keyed on the member rather than on config.
  */
 @Injectable()
 export class SmsService {
-  private readonly logger = new Logger(SmsService.name);
-  private readonly allowed: Set<string> | null;
-
-  constructor(
-    @Inject(SMS_SENDER) private readonly sender: SmsSender,
-    config: ConfigService,
-  ) {
-    const configured = config.get<string>('SMS_ALLOWED_RECIPIENTS');
-
-    if (configured?.trim() === UNRESTRICTED) {
-      this.allowed = null;
-      this.logger.warn(
-        'SMS is unrestricted — every recipient will be texted for real',
-      );
-    } else {
-      this.allowed = new Set(
-        (configured?.trim()
-          ? configured.split(',').map((one) => one.trim())
-          : TEST_RECIPIENTS
-        ).filter(Boolean),
-      );
-      this.logger.log(
-        `SMS restricted to ${[...this.allowed].join(', ')} — set SMS_ALLOWED_RECIPIENTS=all to lift`,
-      );
-    }
-  }
+  constructor(@Inject(SMS_SENDER) private readonly sender: SmsSender) {}
 
   /**
    * @param phone Local Ethiopian form, `0912345678`, exactly as stored. The
    *   adapter converts it for the provider.
    *
-   * Resolves either way; never throws. A message to a number outside the
-   * allowlist is dropped and logged, and reports `delivered: false` — because
-   * nothing was delivered, and a dry run that claims success is worse than one
-   * that fails loudly.
+   * Resolves either way; never throws. Delivery is best-effort, and a caller
+   * that has just taken money must not lose its transaction because a text
+   * did not go out.
    */
-  async send(phone: string, message: string): Promise<SmsResult> {
-    if (this.allowed && !this.allowed.has(phone.trim())) {
-      this.logger.log(
-        `[held back — not an allowed test number] ${phone}: ${message}`,
-      );
-      return {
-        delivered: false,
-        held: true,
-        error: 'Recipient not in the test allowlist',
-      };
-    }
-
+  send(phone: string, message: string): Promise<SmsResult> {
     return this.sender.send(phone, message);
   }
 }

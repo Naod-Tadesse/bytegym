@@ -23,15 +23,6 @@ export interface SmsSender {
 
 export interface SmsResult {
   delivered: boolean;
-  /**
-   * The test allowlist stopped it: nothing was attempted, nothing was charged.
-   *
-   * Its own field rather than something to be read out of `error`, because a
-   * caller has to tell "we did not send this on purpose" from "the provider
-   * refused it" — and matching on the wording of a message is a coupling that
-   * breaks silently the first time somebody improves the sentence.
-   */
-  held?: boolean;
   /** The provider's own id, when it gives one — for chasing a missing message. */
   reference?: string;
   /** Why not, when `delivered` is false. Logged, never shown to a member. */

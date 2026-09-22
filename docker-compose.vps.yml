@@ -76,13 +76,12 @@ services:
       # the gateway reads this same list, so a missing origin breaks live
       # updates silently while the REST API keeps working.
       - CORS_ORIGINS=${CORS_ORIGINS}
-      # Unset means nothing is ever texted; messages go to the log instead.
+      # Leave SMS_PROVIDER unset and nothing is ever texted — messages go to
+      # the log instead. Setting it is what puts real messages on real phones,
+      # for every member the gym sends to.
       - SMS_PROVIDER=${SMS_PROVIDER:-}
       - SMS_API_KEY=${SMS_API_KEY:-}
       - SMS_BASE_URL=${SMS_BASE_URL:-}
-      # Defaults to the test handset even when unset. Set it to `all` only when
-      # the gym is ready to text real members.
-      - SMS_ALLOWED_RECIPIENTS=${SMS_ALLOWED_RECIPIENTS:-}
       # The spec enumerates every route and permission name, so it is off unless
       # asked for.
       - SWAGGER_ENABLED=${SWAGGER_ENABLED:-false}

@@ -7,9 +7,9 @@ export const SMS_KINDS: SmsKind[] = ['direct', 'bulk', 'reminder'];
 /**
  * Mirrors `SmsStatus`.
  *
- * `held` is **not** a kind of failure: the test allowlist stopped it, so
- * nothing was attempted and nothing was charged. The gym has to be able to tell
- * that from a provider rejection.
+ * `held` is **not** a kind of failure, and is no longer produced: a test
+ * allowlist used to stop messages before the provider saw them. It stays here
+ * because older rows carry it and the log has to render them.
  */
 export type SmsStatus = 'sent' | 'failed' | 'held';
 export const SMS_STATUSES: SmsStatus[] = ['sent', 'failed', 'held'];

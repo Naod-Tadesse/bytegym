@@ -324,10 +324,12 @@ export class SmsMessagesService {
       message.body,
     );
 
-    // Three outcomes, not two. `held` means the test allowlist stopped it —
-    // nothing attempted, nothing charged — and a gym reading its log has to
-    // tell that from a provider rejection.
-    const status = result.delivered ? 'sent' : result.held ? 'held' : 'failed';
+    // Two outcomes: it went, or it did not. `held` was the third, written when
+    // a test allowlist stopped a message before the provider saw it; that
+    // allowlist is gone, so nothing produces it any more. The value stays in
+    // the enum because rows already carry it, and rewriting history to tidy up
+    // a status would be the worse trade.
+    const status = result.delivered ? 'sent' : 'failed';
 
     try {
       await this.db.insert(schema.smsMessages).values({

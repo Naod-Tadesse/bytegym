@@ -39,11 +39,12 @@ function smsSenderFactory(config: ConfigService): SmsSender {
 }
 
 /**
- * Text messages, and the one guard that has to outlive any provider choice —
- * the test allowlist in `SmsService`.
+ * Text messages.
  *
- * Exports the service, never the sender: the allowlist is not optional, and a
- * caller holding `SMS_SENDER` directly could bypass it.
+ * Exports the service rather than the sender, so the provider stays an
+ * implementation detail and there is one seam to add a cross-provider rule to
+ * later. Whether anything is actually sent is decided above, by which sender
+ * the factory returns.
  */
 @Module({
   providers: [

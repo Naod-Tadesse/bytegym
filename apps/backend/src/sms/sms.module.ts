@@ -7,8 +7,8 @@ import { SmsRemindersScheduler } from './sms-reminders.scheduler';
 /**
  * The messaging *feature* — what a gym sends and to whom.
  *
- * Distinct from `NotificationsModule`, which owns the plumbing: providers,
- * the allowlist, the socket. This module never touches a provider. It decides
+ * Distinct from `NotificationsModule`, which owns the plumbing: providers and
+ * the socket. This module never touches a provider. It decides
  * who should hear something and writes down what happened, and hands the
  * sending to `NotificationsService`. That split is why swapping SMS vendor
  * cannot reach this far.

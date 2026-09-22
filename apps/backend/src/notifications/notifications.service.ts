@@ -51,8 +51,7 @@ export class NotificationsService {
   }
 
   /**
-   * The same send, with the whole outcome — delivered, held back by the test
-   * allowlist, or refused, and why.
+   * The same send, with the whole outcome — delivered or refused, and why.
    *
    * For callers that write down what happened. `sendSms` is the short form for
    * everyone who only wants to fire and forget.
@@ -61,7 +60,7 @@ export class NotificationsService {
     try {
       const result = await this.sms.send(phone, message);
 
-      if (!result.delivered && !result.held) {
+      if (!result.delivered) {
         this.logger.warn(`SMS to ${phone} not delivered: ${result.error}`);
       }
 

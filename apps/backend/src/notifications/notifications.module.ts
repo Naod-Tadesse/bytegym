@@ -19,8 +19,8 @@ import { WebsocketModule } from './websocket/websocket.module';
  * of them buys nothing.
  *
  * Only `NotificationsService` is exported. Nothing outside gets the gateway or
- * a sender, so the guarantees those two make — the test allowlist, the
- * never-throws rule — cannot be routed around.
+ * a sender, so the guarantee those two make — the never-throws rule — cannot be
+ * routed around.
  */
 @Global()
 @Module({

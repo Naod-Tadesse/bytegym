@@ -34,10 +34,11 @@ export const smsKind = pgEnum('sms_kind', [
 /**
  * What happened to it.
  *
- * `held` is its own answer rather than a kind of failure: it means the test
- * allowlist stopped it, so nothing was attempted and nothing was charged. A gym
- * reading its log needs to tell "the provider rejected this" from "we were not
- * sending for real yet", and `failed` would blur the two.
+ * `held` is historical. It meant a test allowlist stopped the message before
+ * the provider saw it — nothing attempted, nothing charged. That allowlist has
+ * been removed, so nothing writes this any more, but rows already carry it and
+ * dropping a value from a pgEnum means rebuilding the type. It stays so the log
+ * still reads correctly; new messages are only ever `sent` or `failed`.
  */
 export const smsStatus = pgEnum('sms_status', ['sent', 'failed', 'held']);
 

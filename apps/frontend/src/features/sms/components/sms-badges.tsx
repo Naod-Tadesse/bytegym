@@ -14,9 +14,10 @@ import type { SmsKind, SmsStatus } from '../data/types';
 /**
  * `held` is `secondary`, never `destructive`.
  *
- * It is not a failure: the test allowlist stopped the message, so nothing was
- * attempted and nothing was charged. Painting it red would have the gym chasing
- * a provider fault that does not exist.
+ * A historical status: a test allowlist used to stop messages before the
+ * provider saw them, so nothing was attempted and nothing was charged. That
+ * allowlist is gone and nothing writes this any more, but old rows still show
+ * it. Painting it red would have the gym chasing a fault that never happened.
  */
 const STATUS = {
   sent: {
