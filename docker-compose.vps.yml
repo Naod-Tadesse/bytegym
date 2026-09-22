@@ -1,47 +1,20 @@
-# The deployed stack: postgres, the API, the SPA, and a one-shot migrator.
+# The deployed stack: a one-shot migrator, the API, and the SPA.
 #
 #   docker compose -f docker-compose.vps.yml up --build -d
 #
-# Every value comes from the environment — `KEY=${KEY}` — so nothing secret is
-# in this file or in the image. On a plain VPS put them in a `.env` beside this
-# file; under Coolify use its Shared Variables so one edit covers every service.
+# THE DATABASE IS NOT HERE. Postgres is a Coolify-managed service, created and
+# backed up outside this file, and reached over the network below. Nothing in
+# this stack owns the data, so redeploying — or deleting the whole stack —
+# cannot destroy it.
 #
-# `docker-compose.yml` is the local database only. This file is the whole thing.
+# Every value comes from the environment (`KEY=${KEY}`), so nothing secret is in
+# this file or in the image. Put them in Coolify's Shared Variables at project
+# scope and one edit covers every service.
+#
+# `docker-compose.yml` is still the LOCAL development database, unrelated to
+# this file. It is only used by `nx run @org/backend:db-up`.
 
 services:
-  # ============ Database ============
-  #
-  # In the stack rather than managed, because this is one gym on one box. Swap
-  # it for a hosted database by deleting this service and pointing DATABASE_URL
-  # somewhere else — nothing below assumes it is local except the hostname.
-  postgres:
-    image: postgres:18-alpine
-    container_name: bytegym-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-bytegym}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set a password}
-      POSTGRES_DB: ${POSTGRES_DB:-bytegym}
-    volumes:
-      # postgres:18+ expects the mount at /var/lib/postgresql and keeps the
-      # cluster in a major-version subdirectory. Mounting .../data breaks
-      # startup — the same note as the local compose file.
-      - bytegym-pgdata:/var/lib/postgresql
-    # Deliberately no `ports:`. The database is reachable inside the network
-    # only; publishing 5432 on a VPS puts it on the public internet.
-    healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'pg_isready -U ${POSTGRES_USER:-bytegym} -d ${POSTGRES_DB:-bytegym}',
-        ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
-    networks:
-      - bytegym
-
   # ============ Schema and catalogues ============
   #
   # Runs once per deploy and exits. Migrations, then the seed — which is what
@@ -51,6 +24,11 @@ services:
   # Built from the `builder` stage because drizzle-kit and tsx are devDeps: the
   # production image deliberately has neither. Both commands are idempotent, so
   # re-running a deploy is safe.
+  #
+  # There is no `depends_on` for the database any more. The Coolify Postgres
+  # service has its own lifecycle and is already running before this stack
+  # deploys; if it is not, this container fails and the API never starts, which
+  # is the correct order of events.
   migrate:
     build:
       context: .
@@ -67,11 +45,9 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - ADMIN_PHONE=${ADMIN_PHONE}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - bytegym
+      - coolify
 
   # ============ API ============
   api:
@@ -84,7 +60,9 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=${PORT:-3000}
-      # Container hostname, not localhost: this resolves on the compose network.
+      # Points at the Coolify Postgres service, so the host is that service's
+      # name on the shared network — never `localhost`, and never a container
+      # this file defines.
       - DATABASE_URL=${DATABASE_URL}
       - JWT_SECRET=${JWT_SECRET:?generate with openssl rand -hex 32}
       - JWT_EXPIRATION=${JWT_EXPIRATION:-15m}
@@ -104,15 +82,18 @@ services:
       # The spec enumerates every route and permission name, so it is off unless
       # asked for.
       - SWAGGER_ENABLED=${SWAGGER_ENABLED:-false}
+    # The browser dials the API directly, so it needs a public address. Under
+    # Coolify give this service its own domain and let the proxy reach it on the
+    # `coolify` network; the published port is what makes it work on a plain VPS
+    # too. Drop `ports:` entirely if the proxy is the only way in.
     ports:
       - '${PORT:-3000}:${PORT:-3000}'
     depends_on:
-      postgres:
-        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     networks:
       - bytegym
+      - coolify
 
   # ============ SPA ============
   web:
@@ -127,17 +108,34 @@ services:
     image: ${DOCKER_REGISTRY:-}bytegym-web:${IMAGE_TAG:-latest}
     container_name: bytegym-web
     restart: unless-stopped
-    ports:
-      - '${WEB_PORT:-8080}:80'
+    # Exposed to the proxy rather than published to the host: Coolify terminates
+    # TLS and routes the domain to this port. On a plain VPS, swap this for
+    # `ports: ['${WEB_PORT:-8080}:80']`.
+    expose:
+      - '80'
     depends_on:
       api:
         condition: service_started
     networks:
       - bytegym
+      - coolify
 
-volumes:
-  bytegym-pgdata:
+# No volumes. The only durable state is the database, and Coolify owns it.
 
 networks:
+  # Private to this stack: api <-> web <-> migrate.
   bytegym:
     driver: bridge
+  # Coolify's shared network — how these containers reach the managed Postgres,
+  # and how its proxy reaches the SPA. The Postgres service must have "Connect
+  # To Predefined Network" enabled for the hostname in DATABASE_URL to resolve.
+  #
+  # If instead the database sits on its own per-service network, add that one
+  # here as well and attach `api` and `migrate` to it:
+  #
+  #   postgres-net:
+  #     external: true
+  #     name: <the service network name Coolify shows>
+  coolify:
+    external: true
+    name: coolify

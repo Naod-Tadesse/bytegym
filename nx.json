@@ -51,7 +51,7 @@
       "options": {
         "targetName": "test"
       },
-      "exclude": ["apps/e2e/**/*"]
+      "exclude": ["apps/frontend-e2e/**/*"]
     },
     {
       "plugin": "@nx/vite/plugin",

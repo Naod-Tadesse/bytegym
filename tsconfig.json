@@ -10,7 +10,7 @@
       "path": "./apps/frontend"
     },
     {
-      "path": "./apps/e2e"
+      "path": "./apps/frontend-e2e"
     }
   ],
   "compilerOptions": {}
