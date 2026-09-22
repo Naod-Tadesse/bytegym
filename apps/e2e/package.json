@@ -1,0 +1,12 @@
+{
+  "name": "@org/e2e",
+  "version": "0.0.1",
+  "private": true,
+  "description": "End-to-end suite: API specs against /api and UI specs against the SPA.",
+  "devDependencies": {
+    "@playwright/test": "^1.37.0",
+    "@types/pg": "^8.23.1",
+    "dotenv": "^16.4.7",
+    "pg": "^8.23.0"
+  }
+}

@@ -10,13 +10,14 @@ import * as bcrypt from 'bcrypt';
 import { and, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 
 import {
+  assertBranchExists,
   assertCanGrantScope,
   assertCanWriteToBranch,
   assertInScope,
 } from '../common/branch-scope';
 import type { AccountStatus } from '../common/enums';
 import { countOf, paginated, toOffset } from '../common/paginate';
-import { isUniqueViolation } from '../common/pg-errors';
+import { isForeignKeyViolation, isUniqueViolation } from '../common/pg-errors';
 import type { StaffQueryDto } from './dto/staff-query.dto';
 import type { Database, Transaction } from '../database/database.client';
 import { DRIZZLE } from '../database/database.constants';
@@ -202,6 +203,10 @@ export class StaffService {
     assertCanWriteToBranch(scope, dto.primaryBranchId);
     assertCanGrantScope(scope, dto.dataScope);
 
+    // The branch must exist as well as be writable — an unknown job title
+    // already gets a clean 400, and the branch should not be the odd one out.
+    await assertBranchExists(this.db, dto.primaryBranchId);
+
     const jobTitle = await this.loadGrantableJobTitle(
       dto.jobTitleId,
       Boolean(dto.password),
@@ -280,6 +285,9 @@ export class StaffService {
       // The pre-check above catches the common case with a friendly message;
       // this catches the race the pre-check cannot, and turns a raw Postgres
       // error into the right status.
+      if (isForeignKeyViolation(error)) {
+        throw new BadRequestException('Branch not found');
+      }
       if (isUniqueViolation(error)) {
         throw new ConflictException(
           'A person with this phone number already exists',

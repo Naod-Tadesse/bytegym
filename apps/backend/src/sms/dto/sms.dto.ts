@@ -13,6 +13,7 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidateIf,
 } from 'class-validator';
 
 import {
@@ -81,7 +82,15 @@ export class BroadcastDto {
     format: 'uuid',
     description: 'Required when `audience` is `plan`, ignored otherwise.',
   })
-  @IsOptional()
+  /**
+   * `@ValidateIf`, not `@IsOptional`: the two fields are only meaningful
+   * together. `@IsOptional()` short-circuits every other decorator when the
+   * value is undefined, so `audience: 'plan'` with no `planId` used to pass
+   * validation and fail later against a null plan id — a 500 for what is
+   * plainly a bad request. This makes it required exactly when it means
+   * something, and skipped entirely when it does not.
+   */
+  @ValidateIf((dto: BroadcastDto) => dto.audience === 'plan')
   @IsUUID()
   planId?: string;
 

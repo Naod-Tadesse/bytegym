@@ -1,6 +1,13 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
+import { eq } from 'drizzle-orm';
 
 import type { AuthenticatedUser } from '../auth/auth.types';
+import type { Database, Transaction } from '../database/database.client';
+import * as schema from '../database/schema';
 import type { DataScope } from './enums';
 
 /**
@@ -55,5 +62,28 @@ export function assertCanGrantScope(
 ): void {
   if (scope && requested === 'all') {
     throw new ForbiddenException('You cannot grant access to all branches');
+  }
+}
+
+/**
+ * The branch id must name a real branch.
+ *
+ * Scope guards answer *may you write here*; this answers *does here exist*.
+ * Without it a well-formed but unknown uuid gets past `ParseUUIDPipe`, past the
+ * scope check, and only fails at the insert's foreign key — surfacing as a 500
+ * rather than the 400 it is. Mirrors how staff creation already treats an
+ * unknown job title.
+ */
+export async function assertBranchExists(
+  db: Database | Transaction,
+  branchId: string,
+): Promise<void> {
+  const [branch] = await db
+    .select({ id: schema.branches.id })
+    .from(schema.branches)
+    .where(eq(schema.branches.id, branchId));
+
+  if (!branch) {
+    throw new BadRequestException('Branch not found');
   }
 }

@@ -76,8 +76,14 @@ export const memberships = pgTable(
     /**
      * A **snapshot** of `membership_plans.registration_fee`, and `'0.00'` for
      * everyone who is not joining for the first time. "First time" is decided
-     * server-side inside the sale transaction — no prior membership rows at
-     * all, soft-deleted ones included — never from a client-supplied flag.
+     * server-side inside the sale transaction — no **live** prior membership
+     * rows — never from a client-supplied flag.
+     *
+     * Soft-deleted memberships are NOT counted, so a member whose only previous
+     * sale was reversed pays the joining fee again. That is deliberate: undoing
+     * a sale refunds the fee that went with it, which makes the next one
+     * genuinely a first. See the `isFirstEver` count in `memberships.service`,
+     * which filters `isNull(deletedAt)`.
      *
      * Its own column rather than folded into `price` on purpose. Folding makes
      * "what did we take in registrations this quarter" unanswerable, and it

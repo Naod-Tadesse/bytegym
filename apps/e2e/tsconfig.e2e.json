@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // tsconfig.base.json sets `composite` + `emitDeclarationOnly`, so `noEmit`
+    // is illegal here. Declarations go to out-tsc, which is already gitignored.
+    "outDir": "./out-tsc/e2e",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    // `dom` is needed for page.evaluate() callbacks, which run in the browser
+    // and touch localStorage.
+    "lib": ["es2022", "dom"],
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*.ts", "playwright.config.ts"]
+}

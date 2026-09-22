@@ -1,0 +1,18 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:4200",
+      "localStorage": [
+        {
+          "name": "bytegym-auth",
+          "value": "{\"state\":{\"accessToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ODU4OTMxMy03MjZiLTQxNjItOGUyYy02ZDc0MWQ2ODBlYTUiLCJzdGFmZklkIjoiNzg1ODkzMTMtNzI2Yi00MTYyLThlMmMtNmQ3NDFkNjgwZWE1IiwiYWNjb3VudElkIjoiYzllMTEzYTUtNGYxMy00NjgwLTg4ZmYtY2UxOGM5YjBkYjhjIiwiYnJhbmNoSWQiOiI2Y2FiYWRlMS1mZGMxLTRhMWEtYjE5My03OTU4NTRmNDk5YjIiLCJkYXRhU2NvcGUiOiJicmFuY2giLCJwZXJtaXNzaW9ucyI6WyJjaGVja2luLmxpc3QiLCJjaGVja2luLnJlY29yZCIsIm1lbWJlci5jcmVhdGUiLCJtZW1iZXIubGlzdCIsIm1lbWJlci5yZWFkIiwibWVtYmVyc2hpcC5saXN0IiwibWVtYmVyc2hpcC5zZWxsIiwicGF5bWVudC5saXN0IiwicGF5bWVudC5yZWNvcmQiLCJwbGFuLmxpc3QiLCJzbXMubGlzdCJdLCJpYXQiOjE3ODk5OTMyNzYsImV4cCI6MTc5MDA3OTY3Nn0.iO8DPaD1Nwj9raTHTeS-8ZSYGCD6TWm0CAsoUXYZKHg\",\"refreshToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3ODU4OTMxMy03MjZiLTQxNjItOGUyYy02ZDc0MWQ2ODBlYTUiLCJzdGFmZklkIjoiNzg1ODkzMTMtNzI2Yi00MTYyLThlMmMtNmQ3NDFkNjgwZWE1IiwiYWNjb3VudElkIjoiYzllMTEzYTUtNGYxMy00NjgwLTg4ZmYtY2UxOGM5YjBkYjhjIiwiYnJhbmNoSWQiOiI2Y2FiYWRlMS1mZGMxLTRhMWEtYjE5My03OTU4NTRmNDk5YjIiLCJkYXRhU2NvcGUiOiJicmFuY2giLCJwZXJtaXNzaW9ucyI6WyJjaGVja2luLmxpc3QiLCJjaGVja2luLnJlY29yZCIsIm1lbWJlci5jcmVhdGUiLCJtZW1iZXIubGlzdCIsIm1lbWJlci5yZWFkIiwibWVtYmVyc2hpcC5saXN0IiwibWVtYmVyc2hpcC5zZWxsIiwicGF5bWVudC5saXN0IiwicGF5bWVudC5yZWNvcmQiLCJwbGFuLmxpc3QiLCJzbXMubGlzdCJdLCJqdGkiOiJkMWI3YjkwOC1lY2QzLTRlYjYtYWNlMS1iNWMyZGI2MjVhM2EiLCJpYXQiOjE3ODk5OTMyNzYsImV4cCI6MTc5MDU5ODA3Nn0.Gn2p43fg-wP2Ti7VG6u-ZIU_4GpMa0ruq9sjDwzXcZc\"},\"version\":0}"
+        },
+        {
+          "name": "vite-ui-theme",
+          "value": "dark"
+        }
+      ]
+    }
+  ]
+}

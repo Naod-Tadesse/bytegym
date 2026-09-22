@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -8,7 +9,7 @@ import { and, eq, ilike, inArray, isNull, ne, sql } from 'drizzle-orm';
 
 import { countOf, paginated, toOffset } from '../common/paginate';
 import type { PaginationDto } from '../common/pagination.dto';
-import type { Database } from '../database/database.client';
+import type { Database, Transaction } from '../database/database.client';
 import { DRIZZLE } from '../database/database.constants';
 import * as schema from '../database/schema';
 import type { CreateRoleDto, UpdateRoleDto } from './dto/role.dto';
@@ -168,6 +169,15 @@ export class RolesService {
     await this.findOne(roleId);
 
     return this.db.transaction(async (tx) => {
+      // Check the ids against the catalogue before inserting. Without this an
+      // id that matches no permission reaches the role_permissions -> permissions
+      // foreign key and escapes as a 500: a well-formed uuid gets past
+      // ParseUUIDPipe, so the insert is the first thing that objects.
+      //
+      // Read inside the transaction, not before it — a check that runs on a
+      // different connection is not checking what the insert will see.
+      await this.assertPermissionsExist(tx, permissionIds);
+
       const current = await tx
         .select({ permissionId: schema.rolePermissions.permissionId })
         .from(schema.rolePermissions)
@@ -200,6 +210,35 @@ export class RolesService {
 
       return { added: toAdd.length, removed: toRemove.length };
     });
+  }
+
+  /**
+   * Every id must name a real permission.
+   *
+   * The catalogue is code — there is no API to create one — so an unknown id is
+   * always a client mistake and never a race, which is why naming the offending
+   * ids is safe and useful.
+   */
+  private async assertPermissionsExist(
+    tx: Database | Transaction,
+    permissionIds: string[],
+  ) {
+    if (permissionIds.length === 0) return;
+
+    const unique = [...new Set(permissionIds)];
+    const found = await tx
+      .select({ id: schema.permissions.id })
+      .from(schema.permissions)
+      .where(inArray(schema.permissions.id, unique));
+
+    const known = new Set(found.map((row) => row.id));
+    const unknown = unique.filter((id) => !known.has(id));
+
+    if (unknown.length > 0) {
+      throw new BadRequestException(
+        `Unknown permission ${unknown.length === 1 ? 'id' : 'ids'}: ${unknown.join(', ')}`,
+      );
+    }
   }
 
   private async assertNameUnique(name: string, excludeId?: string) {

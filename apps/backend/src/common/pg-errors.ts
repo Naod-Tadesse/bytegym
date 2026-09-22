@@ -52,3 +52,16 @@ export const isUniqueViolation = (error: unknown): boolean =>
  */
 export const isExclusionViolation = (error: unknown): boolean =>
   pgErrorCode(error) === '23P01';
+
+/**
+ * `23503` — a foreign key rejected the row, i.e. the id points at nothing.
+ *
+ * Unlike the other two this is the client's mistake rather than a race: an id
+ * that does not exist cannot start existing while the request is in flight. It
+ * still needs translating, because a well-formed uuid passes `ParseUUIDPipe`
+ * and only fails at the insert — so without this it surfaces as a 500 rather
+ * than the 400 it is. The pre-check names *which* id is wrong; this is the
+ * backstop for anything reaching the database unchecked.
+ */
+export const isForeignKeyViolation = (error: unknown): boolean =>
+  pgErrorCode(error) === '23503';

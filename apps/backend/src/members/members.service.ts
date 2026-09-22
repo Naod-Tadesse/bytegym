@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -6,10 +7,14 @@ import {
 } from '@nestjs/common';
 import { and, eq, ilike, isNull, or, sql } from 'drizzle-orm';
 
-import { assertCanWriteToBranch, assertInScope } from '../common/branch-scope';
+import {
+  assertBranchExists,
+  assertCanWriteToBranch,
+  assertInScope,
+} from '../common/branch-scope';
 import { countOf, paginated, toOffset } from '../common/paginate';
 import type { PaginationDto } from '../common/pagination.dto';
-import { isUniqueViolation } from '../common/pg-errors';
+import { isForeignKeyViolation, isUniqueViolation } from '../common/pg-errors';
 import type { Database, Transaction } from '../database/database.client';
 import { DRIZZLE } from '../database/database.constants';
 import { nextMemberCode } from '../database/member-code';
@@ -165,6 +170,10 @@ export class MembersService {
     // there is nothing to conceal.
     assertCanWriteToBranch(scope, dto.branchId);
 
+    // ...and it has to be a branch that exists, or the insert's foreign key is
+    // the first thing to object and the client gets a 500.
+    await assertBranchExists(this.db, dto.branchId);
+
     // Friendly pre-check for the common case; the partial unique index on
     // person.phone is the actual guard.
     const [taken] = await this.db
@@ -212,6 +221,11 @@ export class MembersService {
       // the right status.
       if (isUniqueViolation(error)) {
         throw new ConflictException(PHONE_TAKEN);
+      }
+      // Backstop for any id that reached the insert unchecked — a branch
+      // deleted between the check above and the write, for instance.
+      if (isForeignKeyViolation(error)) {
+        throw new BadRequestException('Branch not found');
       }
       throw error;
     }
