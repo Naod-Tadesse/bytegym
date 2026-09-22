@@ -7,9 +7,13 @@
 # this stack owns the data, so redeploying — or deleting the whole stack —
 # cannot destroy it.
 #
-# Every value comes from the environment (`KEY=${KEY}`), so nothing secret is in
-# this file or in the image. Put them in Coolify's Shared Variables at project
-# scope and one edit covers every service.
+# Every value is interpolated from the environment, so nothing secret is in this
+# file or in the image. Put them in Coolify's Shared Variables at project scope
+# and one edit covers every service.
+#
+# Note for anyone editing: Coolify discovers variables by scanning this file for
+# `$`-brace references, comments included. Do not write one in prose — it turns
+# up in the dashboard as a real variable that nothing reads.
 #
 # `docker-compose.yml` is still the LOCAL development database, unrelated to
 # this file. It is only used by `nx run @org/backend:db-up`.
@@ -109,8 +113,8 @@ services:
     container_name: bytegym-web
     restart: unless-stopped
     # Exposed to the proxy rather than published to the host: Coolify terminates
-    # TLS and routes the domain to this port. On a plain VPS, swap this for
-    # `ports: ['${WEB_PORT:-8080}:80']`.
+    # TLS and routes the domain to this port. On a plain VPS, replace `expose`
+    # with a published `ports` entry mapping a host port to 80.
     expose:
       - '80'
     depends_on:
