@@ -16,5 +16,9 @@ module.exports = {
     '^.+\\.[tj]s$': ['@swc/jest', swcJestConfig],
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
+  // Several @nestjs packages now ship ESM-only `dist/index.js`, and Jest does
+  // not transform node_modules by default — so importing anything that reaches
+  // them fails on `Unexpected token 'export'`. Transform those, leave the rest.
+  transformIgnorePatterns: ['/node_modules/(?!(@nestjs)/)'],
   coverageDirectory: 'test-output/jest/coverage',
 };

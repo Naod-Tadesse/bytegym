@@ -2,5 +2,11 @@
   "name": "@org/frontend-e2e",
   "version": "0.0.1",
   "private": true,
-  "description": "End-to-end tests for @org/frontend, driven through a real browser."
+  "description": "End-to-end tests for @org/frontend, driven through a real browser.",
+  "devDependencies": {
+    "@playwright/test": "^1.37.0",
+    "@types/pg": "^8.23.1",
+    "dotenv": "^16.4.7",
+    "pg": "^8.23.0"
+  }
 }
